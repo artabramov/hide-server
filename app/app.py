@@ -4,7 +4,7 @@ from app.context import get_ctx
 from app.routers import hello_routers
 from app.routers import user_routers
 from app.config import get_cfg
-from app.logger import get_log
+from app.logger import log
 from app.session import get_session
 from uuid import uuid4
 import os
@@ -33,7 +33,6 @@ async def add_process_time_header(request: Request, call_next):
     ctx.trace_request_uuid = str(uuid4())
     ctx.pid = os.getpid()
 
-    log = get_log()
     log.debug("Request received, method=%s, url=%s, headers=%s." % (
         request.method, str(request.url), str(request.headers)))
 

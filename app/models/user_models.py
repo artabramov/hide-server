@@ -12,9 +12,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 # from app.helpers.hash_helper import HashHelper
 # from config import get_config
 from app.mixins.hash_mixin import HashMixin
-from app.config import get_cfg
-
-cfg = get_cfg()
+from app.mixins.fernet_mixin import FernetMixin
 
 USER_PASS_ATTEMPTS_LIMIT = 10
 USER_PASS_SUSPENDED_TIME = 30
@@ -56,7 +54,7 @@ class UserRole(enum.Enum):
     admin = "admin"
 
 
-class User(Base, HashMixin):
+class User(Base, HashMixin, FernetMixin):
     """SQLAlchemy model for user."""
 
     __tablename__ = "users"
@@ -79,17 +77,19 @@ class User(Base, HashMixin):
 
     user_meta = relationship("UserMeta", back_populates="user", lazy="joined", cascade="all,delete")
 
-    def __init__(self, user_login: str, user_pass: str, first_name: str, last_name: str):
+    def __init__(self, user_login: str, user_pass: str, first_name: str, last_name: str, mfa_key: str, jti: str):
         """Init user SQLAlchemy object."""
         self.suspended_date = 0
         self.user_role = UserRole.none
         self.user_login = user_login
-        self.pass_hash = self.get_hash(user_pass.get_secret_value(), cfg.APP_HASH_SALT)
+        self.pass_hash = self.get_hash(user_pass.get_secret_value())
         self.first_name = first_name
         self.last_name = last_name
         self.pass_attempts = 0
         self.pass_accepted = False
+        self.mfa_key_encrypted = self.encrypt_value(mfa_key)
         self.mfa_attempts = 0
+        self.jti_encrypted = self.encrypt_value(jti)
 
     # async def encrypt_attr(self, key: str, value: str) -> None:
     #     """Set encrypted attribute."""

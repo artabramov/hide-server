@@ -31,6 +31,9 @@ class Config:
     APP_URL: str
     APP_PREFIX: str
     APP_HASH_SALT: str
+    APP_FERNET_KEY: bytes
+    APP_JWT_SECRET: str
+    APP_JWT_ALGORITHM: str
 
 
 @lru_cache
@@ -47,6 +50,9 @@ def get_cfg() -> dict:
 
         elif Config.__annotations__[key] == int:
             setattr(cfg, key, int(value))
+
+        elif Config.__annotations__[key] == bytes:
+            setattr(cfg, key, bytes(value, "utf-8"))
 
         elif Config.__annotations__[key] == bool:
             setattr(cfg, key, True if value.lower() == "true" else False)

@@ -1,13 +1,16 @@
 """Hash mixin."""
 
 import hashlib
+from app.config import get_cfg
+
+cfg = get_cfg()
 
 
 class HashMixin:
     """Hash mixin."""
 
-    def get_hash(self, value: str, salt: str) -> str:
+    def get_hash(self, value: str) -> str:
         """Return hashed value."""
-        encoded_value = (value + salt).encode()
+        encoded_value = (value + cfg.APP_HASH_SALT).encode()
         hash = hashlib.sha512(encoded_value)
         return hash.hexdigest()
