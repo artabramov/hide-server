@@ -13,10 +13,13 @@ from sqlalchemy.ext.hybrid import hybrid_property
 # from config import get_config
 from app.mixins.hash_mixin import HashMixin
 from app.mixins.fernet_mixin import FernetMixin
+from app.config import get_cfg
 
 USER_PASS_ATTEMPTS_LIMIT = 10
 USER_PASS_SUSPENDED_TIME = 30
 USER_MFA_ATTEMPTS_LIMIT = 10
+
+cfg = get_cfg()
 
 # config = get_config()
 # fernet_helper = FernetHelper(config.FERNET_ENCRYPTION_KEY)
@@ -87,19 +90,29 @@ class User(Base, HashMixin, FernetMixin):
         self.last_name = last_name
         self.pass_attempts = 0
         self.pass_accepted = False
-        self.mfa_key_encrypted = self.encrypt_value(mfa_key)
+        self.mfa_key = mfa_key
         self.mfa_attempts = 0
-        self.jti_encrypted = self.encrypt_value(jti)
+        self.jti = jti
 
-    # async def encrypt_attr(self, key: str, value: str) -> None:
-    #     """Set encrypted attribute."""
-    #     if key in self._encrypted_attrs:
-    #         setattr(self, key + "_encrypted", await fernet_helper.encrypt_value(value))
+    @property
+    def mfa_key(self):
+        return self.decrypt_value(self.mfa_key_encrypted)
 
-    # async def decrypt_attr(self, key: str):
-    #     """Get decrypted attribute."""
-    #     if key in self._encrypted_attrs:
-    #         return await fernet_helper.decrypt_value(getattr(self, key + "_encrypted"))
+    @mfa_key.setter
+    def mfa_key(self, value: str):
+        self.mfa_key_encrypted = self.encrypt_value(value)
+
+    @property
+    def mfa_image(self):
+        return self.mfa_key + "." + cfg.MFA_EXTENSION
+
+    @property
+    def jti(self):
+        return self.decrypt_value(self.jti_encrypted)
+
+    @jti.setter
+    def jti(self, value: str):
+        self.jti_encrypted = self.encrypt_value(value)
 
     @hybrid_property
     def full_name(self) -> str:

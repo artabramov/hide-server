@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from contextlib import asynccontextmanager
 from app.context import get_ctx
 from app.routers import hello_routers
@@ -10,6 +12,7 @@ from uuid import uuid4
 import os
 import time
 from app.session import Base, async_engine
+from app.errors import E
 
 
 @asynccontextmanager
@@ -43,3 +46,13 @@ async def add_process_time_header(request: Request, call_next):
         request_elapsed_time, response.status_code, str(response.headers.raw)))
 
     return response
+
+
+@app.exception_handler(Exception)
+async def validation_exception_handler(request: Request, e: Exception):
+    """Process validation error."""
+    log.error('Internal server error, exception=%s.' % str(e))
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=jsonable_encoder({"detail": E.INTERNAL_SERVER_ERROR}),
+    )

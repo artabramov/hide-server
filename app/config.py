@@ -35,6 +35,16 @@ class Config:
     APP_JWT_SECRET: str
     APP_JWT_ALGORITHM: str
 
+    MFA_PATH: str
+    MFA_NAME: str
+    MFA_EXTENSION: str
+    MFA_VERSION: int
+    MFA_SIZE: int
+    MFA_BORDER: int
+    MFA_FIT: str
+    MFA_COLOR: str
+    MFA_BACKGROUND: str
+
 
 @lru_cache
 def get_cfg() -> dict:
