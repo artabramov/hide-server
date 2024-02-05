@@ -13,6 +13,7 @@ import os
 import time
 from app.session import Base, async_engine
 from app.errors import E
+from fastapi.staticfiles import StaticFiles
 
 
 @asynccontextmanager
@@ -25,6 +26,7 @@ async def lifespan(app: FastAPI):
 
 cfg = get_cfg()
 app = FastAPI(lifespan=lifespan)
+app.mount(cfg.MFA_RELATIVE_URL, StaticFiles(directory=cfg.MFA_ABSOLUTE_PATH, html=False), name=cfg.MFA_ABSOLUTE_PATH)
 app.include_router(hello_routers.router, prefix=cfg.APP_PREFIX)
 app.include_router(user_routers.router, prefix=cfg.APP_PREFIX)
 

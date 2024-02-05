@@ -35,7 +35,8 @@ class Config:
     APP_JWT_SECRET: str
     APP_JWT_ALGORITHM: str
 
-    MFA_PATH: str
+    MFA_ABSOLUTE_PATH: str
+    MFA_RELATIVE_URL: str
     MFA_NAME: str
     MFA_EXTENSION: str
     MFA_VERSION: int

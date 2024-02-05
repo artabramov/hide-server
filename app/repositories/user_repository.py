@@ -44,6 +44,8 @@ class UserRepository:
 
         try:
             mfa_key = MFAHelper.create_mfa_key()
+            MFAHelper.create_mfa_image(user_login, mfa_key)
+
             jti = JWTHelper.create_jti()
             user = User(user_login, user_pass, first_name, last_name, mfa_key, jti)
             await entity_manager.insert(user, commit=True)
