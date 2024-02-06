@@ -29,17 +29,17 @@ class MFAHelper:
         """Create MFA image."""
         qr = qrcode.QRCode(version=cfg.MFA_VERSION, error_correction=qrcode.constants.ERROR_CORRECT_L,
                            box_size=cfg.MFA_SIZE, border=cfg.MFA_BORDER)
-        qr.add_data('otpauth://totp/%s?secret=%s&issuer=%s' % (cfg.MFA_NAME, mfa_key, user_login))
+        qr.add_data("otpauth://totp/%s?secret=%s&issuer=%s" % (cfg.APP_TITLE, mfa_key, user_login))
         qr.make(fit=cfg.MFA_FIT)
         img = qr.make_image(fill_color=cfg.MFA_COLOR, back_color=cfg.MFA_BACKGROUND)
-        path = os.path.join(cfg.MFA_ABSOLUTE_PATH, mfa_key + '.' + cfg.MFA_EXTENSION)
+        path = os.path.join(cfg.MFA_PATH, mfa_key + cfg.MFA_EXTENSION)
         img.save(path)
         log.debug("Create MFA image, path=%s." % path)
 
     # @staticmethod
     # async def delete_mfa_image(mfa_key: str) -> None:
     #     """Delete MFA image."""
-    #     path = FileManager.path_join(config.APPDATA_PATH, config.MFA_DIR, mfa_key + '.' + config.MFA_EXTENSION)
+    #     path = FileManager.path_join(config.APPDATA_PATH, config.MFA_DIR, mfa_key + config.MFA_EXTENSION)
     #     await FileManager.file_delete(path)
     #     log.debug("Delete MFA image, path=%s." % path)
 

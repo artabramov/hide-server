@@ -7,7 +7,6 @@ from app.routers import hello_routers
 from app.routers import user_routers
 from app.config import get_cfg
 from app.logger import log
-from app.session import get_session
 from uuid import uuid4
 import os
 import time
@@ -25,8 +24,8 @@ async def lifespan(app: FastAPI):
 
 
 cfg = get_cfg()
-app = FastAPI(lifespan=lifespan)
-app.mount(cfg.MFA_RELATIVE_URL, StaticFiles(directory=cfg.MFA_ABSOLUTE_PATH, html=False), name=cfg.MFA_ABSOLUTE_PATH)
+app = FastAPI(lifespan=lifespan, title=cfg.APP_TITLE, version=cfg.APP_VERSION)
+app.mount(cfg.MFA_PREFIX, StaticFiles(directory=cfg.MFA_PATH, html=False), name=cfg.MFA_PATH)
 app.include_router(hello_routers.router, prefix=cfg.APP_PREFIX)
 app.include_router(user_routers.router, prefix=cfg.APP_PREFIX)
 

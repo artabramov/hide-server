@@ -104,7 +104,7 @@ class User(Base, HashMixin, FernetMixin):
 
     @property
     def mfa_image(self):
-        return cfg.MFA_RELATIVE_URL + "/" + self.mfa_key + "." + cfg.MFA_EXTENSION
+        return cfg.MFA_URL + self.mfa_key + cfg.MFA_EXTENSION
 
     @property
     def jti(self):

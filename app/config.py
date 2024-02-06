@@ -26,18 +26,19 @@ class Config:
     REDIS_EXPIRE: int
     REDIS_DECODE: bool
 
-    APP_NAME: str
-    APP_PATH: str
+    APP_TITLE: str
+    APP_VERSION: str
     APP_URL: str
     APP_PREFIX: str
+    APP_PATH: str
     APP_HASH_SALT: str
     APP_FERNET_KEY: bytes
     APP_JWT_SECRET: str
     APP_JWT_ALGORITHM: str
 
-    MFA_ABSOLUTE_PATH: str
-    MFA_RELATIVE_URL: str
-    MFA_NAME: str
+    MFA_URL: str
+    MFA_PREFIX: str
+    MFA_PATH: str
     MFA_EXTENSION: str
     MFA_VERSION: int
     MFA_SIZE: int
