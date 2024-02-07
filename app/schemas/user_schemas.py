@@ -14,3 +14,9 @@ class UserRegisterRequest(BaseModel):
     first_name: str = Field(Query(..., min_length=2, max_length=40))
     last_name: str = Field(Query(..., min_length=2, max_length=40))
 
+
+class UserLoginRequest(BaseModel):
+    """Pydantic schema for user login request."""
+
+    user_login: str
+    user_pass: SecretStr

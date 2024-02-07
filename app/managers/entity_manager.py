@@ -55,8 +55,11 @@ class EntityManager:
 
     async def select_by(self, cls: object, **kwargs) -> object:
         """Select SQLAlchemy object from Postgres database."""
-        objs = await self.select_all(cls, **kwargs)
-        return objs[0] if objs else None
+        async_result = await self.session.execute(select(cls).where(*self._where(cls, **kwargs)).limit(1))
+        obj = async_result.unique().scalars().one_or_none()
+        log.debug("Select object from Postgres database by params, cls=%s, kwargs=%s, obj=%s." % (
+            str(cls.__name__), str(kwargs), obj))
+        return obj
 
     async def update(self, obj: object, commit: bool = False) -> None:
         """Update SQLAlchemy object in Postgres database."""

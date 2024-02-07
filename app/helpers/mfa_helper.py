@@ -43,4 +43,3 @@ class MFAHelper:
         path = os.path.join(cfg.MFA_PATH, mfa_key + cfg.MFA_EXTENSION)
         await FileManager.file_delete(path)
         log.debug("Delete MFA image, path=%s." % path)
-

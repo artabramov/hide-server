@@ -3,10 +3,11 @@
 from fastapi.exceptions import RequestValidationError
 from app.managers.entity_manager import EntityManager
 from app.managers.cache_manager import CacheManager
-from app.models.user_models import User
+from app.models.user_models import User, UserRole
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.errors import E
+import time
 
 
 class UserRepository:
@@ -43,3 +44,41 @@ class UserRepository:
             raise e
 
         return user
+
+    async def login(self, user_login: str, user_pass: str):
+        """User login."""
+        entity_manager = EntityManager(self.session)
+        user = await entity_manager.select_by(User, user_login__eq=user_login)
+
+        if not user:
+            raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
+                                          "type": "value_invalid", "msg": E.LOGIN_INVALID})
+
+        elif user.user_role.name == UserRole.none.name:
+            raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
+                                          "type": "login_denied", "msg": E.LOGIN_DENIED})
+
+        elif user.suspended_date >= time.time():
+            raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
+                                          "type": "login_suspended", "msg": E.LOGIN_SUSPENDED})
+
+        # elif user.pass_hash == await hash_helper.hash(user_pass):
+        #     user.suspended_date = 0
+        #     user.pass_attempts = 0
+        #     user.pass_accepted = True
+        #     await self.entity_manager.update(user, commit=True)
+        #     await self.cache_manager.delete(user)
+
+        # else:
+        #     user.suspended_date = 0
+        #     user.pass_attempts = user.pass_attempts + 1
+        #     user.pass_accepted = False
+        #     if user.pass_attempts >= USER_PASS_ATTEMPTS_LIMIT:
+        #         user.suspended_date = int(time.time()) + USER_PASS_SUSPENDED_TIME
+        #         user.pass_attempts = 0
+
+        #     await self.entity_manager.update(user, commit=True)
+        #     await self.cache_manager.delete(user)
+
+        #     raise RequestValidationError({"loc": ["query", "user_pass"], "input": user_pass,
+        #                                   "type": "value_invalid", "msg": E.value_invalid})

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.session import get_session
 from app.cache import get_cache
-from app.schemas.user_schemas import UserRegisterRequest
+from app.schemas.user_schemas import UserRegisterRequest, UserLoginRequest
 from app.repositories.user_repository import UserRepository
 
 router = APIRouter()
@@ -15,4 +15,14 @@ async def user_register(session = Depends(get_session), cache = Depends(get_cach
         "user_id": user.id,
         "mfa_key": user.mfa_key,
         'mfa_image': user.mfa_image,
+    }
+
+
+@router.get('/auth/login', tags=['auth'])
+async def user_login(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(UserLoginRequest)):
+    """User login."""
+    user_repository = UserRepository(session, cache)
+    await user_repository.login(schema.user_login, schema.user_pass.get_secret_value())
+    return {
+        "pass_accepted": True,
     }
