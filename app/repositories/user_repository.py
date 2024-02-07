@@ -1,24 +1,5 @@
 """User repository."""
 
-# from app.models.user_models import User, UserMeta, UserRole
-# from app.models.user_models import USER_PASS_ATTEMPTS_LIMIT, USER_PASS_SUSPENDED_TIME, USER_MFA_ATTEMPTS_LIMIT
-# from app.managers.entity_manager import EntityManager
-# from app.errors import E
-# from app.helpers.mfa_helper import MFAHelper
-# from app.helpers.jwt_helper import JWTHelper
-# from app.dotenv import get_config
-# from fastapi import HTTPException, UploadFile
-# from app.helpers.hash_helper import HashHelper
-# from fastapi.exceptions import RequestValidationError
-# from app.repositories.meta_repository import MetaRepository
-# from app.managers.file_manager import FileManager
-# from PIL import Image
-# import time
-
-# config = get_config()
-# jwt_helper = JWTHelper(config.JWT_SECRET, config.JWT_ALGORITHM)
-# hash_helper = HashHelper(config.HASH_SALT)
-
 from fastapi.exceptions import RequestValidationError
 from app.managers.entity_manager import EntityManager
 from app.managers.cache_manager import CacheManager
@@ -57,7 +38,7 @@ class UserRepository:
             await entity_manager.commit()
 
         except Exception as e:
-            # await MFAHelper.delete_mfa_image(mfa_key)
+            await MFAHelper.delete_mfa_image(mfa_key)
             await entity_manager.rollback()
             raise e
 

@@ -3,7 +3,7 @@
 import pyotp
 import qrcode
 from app.config import get_cfg
-# from app.managers.file_manager import FileManager
+from app.managers.file_manager import FileManager
 from app.logger import get_log
 import os
 
@@ -37,10 +37,10 @@ class MFAHelper:
         img.save(path)
         log.debug("Create MFA image, path=%s." % path)
 
-    # @staticmethod
-    # async def delete_mfa_image(mfa_key: str) -> None:
-    #     """Delete MFA image."""
-    #     path = FileManager.path_join(config.APPDATA_PATH, config.MFA_DIR, mfa_key + config.MFA_EXTENSION)
-    #     await FileManager.file_delete(path)
-    #     log.debug("Delete MFA image, path=%s." % path)
+    @staticmethod
+    async def delete_mfa_image(mfa_key: str) -> None:
+        """Delete MFA image."""
+        path = os.path.join(cfg.MFA_PATH, mfa_key + cfg.MFA_EXTENSION)
+        await FileManager.file_delete(path)
+        log.debug("Delete MFA image, path=%s." % path)
 
