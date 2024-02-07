@@ -27,6 +27,7 @@ class Config:
     REDIS_DECODE: bool
 
     APP_TITLE: str
+    APP_SUMMARY: str
     APP_VERSION: str
     APP_URL: str
     APP_PREFIX: str

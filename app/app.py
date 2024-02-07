@@ -6,13 +6,17 @@ from app.context import get_ctx
 from app.routers import hello_routers
 from app.routers import user_routers
 from app.config import get_cfg
-from app.logger import log
+from app.logger import get_log
 from uuid import uuid4
 import os
 import time
 from app.session import Base, async_engine
 from app.errors import E
 from fastapi.staticfiles import StaticFiles
+
+
+cfg = get_cfg()
+log = get_log()
 
 
 @asynccontextmanager
@@ -23,8 +27,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-cfg = get_cfg()
-app = FastAPI(lifespan=lifespan, title=cfg.APP_TITLE, version=cfg.APP_VERSION)
+app = FastAPI(lifespan=lifespan, title=cfg.APP_TITLE, summary=cfg.APP_SUMMARY, version=cfg.APP_VERSION)
 app.mount(cfg.MFA_PREFIX, StaticFiles(directory=cfg.MFA_PATH, html=False), name=cfg.MFA_PATH)
 app.include_router(hello_routers.router, prefix=cfg.APP_PREFIX)
 app.include_router(user_routers.router, prefix=cfg.APP_PREFIX)

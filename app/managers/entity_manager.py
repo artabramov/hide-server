@@ -4,7 +4,7 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.sql import func, exists
 from sqlalchemy import select
 from decimal import Decimal
-from app.logger import log
+from app.logger import get_log
 
 _ORDER_BY, _ORDER = "order_by", "order"
 _ASC, _DESC = "asc", "desc"
@@ -21,6 +21,9 @@ _SQLALCHEMY_OPERATORS = {
     "like": "like",
     "ilike": "ilike",
 }
+
+log = get_log()
+
 
 
 class EntityManager:

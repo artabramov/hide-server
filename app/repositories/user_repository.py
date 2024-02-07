@@ -21,6 +21,7 @@
 
 from fastapi.exceptions import RequestValidationError
 from app.managers.entity_manager import EntityManager
+from app.managers.cache_manager import CacheManager
 from app.models.user_models import User
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
@@ -48,7 +49,12 @@ class UserRepository:
 
             jti = JWTHelper.create_jti()
             user = User(user_login, user_pass, first_name, last_name, mfa_key, jti)
-            await entity_manager.insert(user, commit=True)
+            await entity_manager.insert(user)
+
+            cache_manager = CacheManager(self.cache)
+            await cache_manager.set(user)
+
+            await entity_manager.commit()
 
         except Exception as e:
             # await MFAHelper.delete_mfa_image(mfa_key)

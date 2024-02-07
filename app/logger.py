@@ -19,11 +19,14 @@ class ContextualFilter(Filter):
         return True
 
 
-handler = RotatingFileHandler(filename=cfg.LOG_FILENAME, maxBytes=cfg.LOG_FILESIZE,
-                                backupCount=cfg.LOG_FILES_LIMIT)
-handler.setFormatter(logging.Formatter(cfg.LOG_FORMAT))
+@lru_cache
+def get_log():
+    handler = RotatingFileHandler(filename=cfg.LOG_FILENAME, maxBytes=cfg.LOG_FILESIZE,
+                                    backupCount=cfg.LOG_FILES_LIMIT)
+    handler.setFormatter(logging.Formatter(cfg.LOG_FORMAT))
 
-log = logging.getLogger(cfg.APP_TITLE)
-log.addHandler(handler)
-log.addFilter(ContextualFilter())
-log.setLevel(logging.getLevelName(cfg.LOG_LEVEL))
+    log = logging.getLogger(cfg.APP_TITLE)
+    log.addHandler(handler)
+    log.addFilter(ContextualFilter())
+    log.setLevel(logging.getLevelName(cfg.LOG_LEVEL))
+    return log

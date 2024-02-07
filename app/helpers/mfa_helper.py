@@ -4,10 +4,11 @@ import pyotp
 import qrcode
 from app.config import get_cfg
 # from app.managers.file_manager import FileManager
-from app.logger import log
+from app.logger import get_log
 import os
 
 cfg = get_cfg()
+log = get_log()
 
 
 class MFAHelper:
