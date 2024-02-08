@@ -20,3 +20,11 @@ class UserLoginRequest(BaseModel):
 
     user_login: str
     user_pass: SecretStr
+
+
+class TokenSelectRequest(BaseModel):
+    """Pydantic schema for token selection request."""
+
+    user_login: str
+    user_totp: str = Field(Query(..., min_length=6, max_length=6))
+    exp: Optional[int] = None

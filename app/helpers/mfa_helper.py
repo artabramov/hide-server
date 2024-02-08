@@ -19,11 +19,11 @@ class MFAHelper:
         """Generate a random MFA key."""
         return pyotp.random_base32()
 
-    # @staticmethod
-    # async def get_mfa_totp(mfa_key: str) -> str:
-    #     """Return string TOTP key for currenct moment and defined mfa_key."""
-    #     totp = pyotp.TOTP(mfa_key)
-    #     return totp.now()
+    @staticmethod
+    def get_mfa_totp(mfa_key: str) -> str:
+        """Return string TOTP key for currenct moment and defined mfa_key."""
+        totp = pyotp.TOTP(mfa_key)
+        return totp.now()
 
     @staticmethod
     def create_mfa_image(user_login: str, mfa_key: str) -> None:

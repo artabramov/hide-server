@@ -60,11 +60,11 @@ class UserRepository:
 
         elif user.user_role.name == UserRole.none.name:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
-                                          "type": "login_denied", "msg": E.LOGIN_DENIED})
+                                          "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
 
         elif user.suspended_date >= time.time():
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
-                                          "type": "login_suspended", "msg": E.LOGIN_SUSPENDED})
+                                          "type": "login_suspended", "msg": E.USER_LOGIN_SUSPENDED})
 
         elif user.pass_hash == HashHelper.get_hash(user_pass):
             user.suspended_date = 0
@@ -85,4 +85,40 @@ class UserRepository:
             # await self.cache_manager.delete(user)
 
             raise RequestValidationError({"loc": ["query", "user_pass"], "input": user_pass,
-                                          "type": "value_invalid", "msg": E.LOGIN_INVALID})
+                                          "type": "value_invalid", "msg": E.USER_PASS_INVALID})
+
+
+    async def token_select(self, user_login: str, user_totp: str, exp: int = None) -> str:
+        """Get user token."""
+        entity_manager = EntityManager(self.session)
+        user = await entity_manager.select_by(User, user_login__eq=user_login)
+
+        if not user:
+            raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
+                                          "type": "login_invalid", "msg": E.USER_LOGIN_INVALID})
+
+        elif not user.pass_accepted:
+            raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
+                                          "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
+
+        if user_totp == MFAHelper.get_mfa_totp(user.mfa_key):
+            await MFAHelper.delete_mfa_image(user.mfa_key)
+            user.mfa_attempts = 0
+            user.pass_accepted = False
+            await entity_manager.update(user, commit=True)
+            # await self.cache_manager.delete(user)
+
+            user_token = JWTHelper.encode_token(user.id, user.user_role.name, user.user_login, user.jti, exp)
+            return user_token
+
+        else:
+            user.mfa_attempts = user.mfa_attempts + 1
+            if user.mfa_attempts >= cfg.USER_MFA_ATTEMPTS_LIMIT:
+                user.mfa_attempts = 0
+                user.pass_accepted = False
+
+            await entity_manager.update(user, commit=True)
+            # await self.cache_manager.delete(user)
+
+            raise RequestValidationError({"loc": ["query", "user_totp"], "input": user_totp,
+                                          "type": "value_invalid", "msg": E.USER_TOTP_INVALID})
