@@ -5,13 +5,9 @@ from time import time
 from sqlalchemy import Boolean, Column, Integer, BigInteger, SmallInteger, String, Enum
 from app.session import Base
 from sqlalchemy.ext.hybrid import hybrid_property
-from app.mixins.hash_mixin import HashMixin
+from app.helpers.hash_helper import HashHelper
 from app.mixins.fernet_mixin import FernetMixin
 from app.config import get_cfg
-
-USER_PASS_ATTEMPTS_LIMIT = 10
-USER_PASS_SUSPENDED_TIME = 30
-USER_MFA_ATTEMPTS_LIMIT = 10
 
 cfg = get_cfg()
 
@@ -26,7 +22,7 @@ class UserRole(enum.Enum):
     admin = "admin"
 
 
-class User(Base, HashMixin, FernetMixin):
+class User(Base, FernetMixin):
     """SQLAlchemy model for user."""
 
     __tablename__ = "users"
@@ -55,7 +51,7 @@ class User(Base, HashMixin, FernetMixin):
         self.suspended_date = 0
         self.user_role = UserRole.none
         self.user_login = user_login
-        self.pass_hash = self.get_hash(user_pass.get_secret_value())
+        self.pass_hash = HashHelper.get_hash(user_pass.get_secret_value())
         self.first_name = first_name
         self.last_name = last_name
         self.pass_attempts = 0

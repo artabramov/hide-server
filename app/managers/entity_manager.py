@@ -64,7 +64,7 @@ class EntityManager:
     async def update(self, obj: object, commit: bool = False) -> None:
         """Update SQLAlchemy object in Postgres database."""
         self.session.merge(obj)
-        self.session.flush()
+        await self.session.flush()
 
         log.debug("Update SQLAlchemy object in Postgres database, cls=%s, obj=%s." % (
             str(obj.__class__.__name__), str(obj.__dict__)))

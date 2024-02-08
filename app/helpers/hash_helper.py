@@ -6,10 +6,11 @@ from app.config import get_cfg
 cfg = get_cfg()
 
 
-class HashMixin:
+class HashHelper:
     """Hash mixin."""
 
-    def get_hash(self, value: str) -> str:
+    @staticmethod
+    def get_hash(value: str) -> str:
         """Return hashed value."""
         encoded_value = (value + cfg.APP_HASH_SALT).encode()
         hash = hashlib.sha512(encoded_value)

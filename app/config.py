@@ -48,6 +48,10 @@ class Config:
     MFA_COLOR: str
     MFA_BACKGROUND: str
 
+    USER_PASS_ATTEMPTS_LIMIT: int
+    USER_LOGIN_SUSPENDED_TIME: int
+    USER_MFA_ATTEMPTS_LIMIT: int
+
 
 @lru_cache
 def get_cfg() -> dict:
