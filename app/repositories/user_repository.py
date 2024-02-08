@@ -7,6 +7,7 @@ from app.models.user_models import User, UserRole
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper
+from fastapi import HTTPException, UploadFile
 from app.errors import E
 from app.config import get_cfg
 import time
@@ -122,3 +123,18 @@ class UserRepository:
 
             raise RequestValidationError({"loc": ["query", "user_totp"], "input": user_totp,
                                           "type": "value_invalid", "msg": E.USER_TOTP_INVALID})
+
+
+    async def select(self, user_id: int):
+        """Select user."""
+        cache_manager = CacheManager(self.cache)
+        user = await cache_manager.get(User, user_id)
+        if not user:
+            entity_manager = EntityManager(self.session)
+            user = await entity_manager.select(User, user_id)
+
+        if not user:
+            raise HTTPException(status_code=404)
+
+        await cache_manager.set(user)
+        return user

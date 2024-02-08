@@ -104,3 +104,17 @@ class User(Base, FernetMixin):
     def can_read(self) -> bool:
         """Does the user have reader permissions."""
         return self.user_role in [UserRole.admin, UserRole.editor, UserRole.writer, UserRole.reader]
+
+    def to_dict(self) -> dict:
+        """Return model as dict."""
+        return {
+            'id': self.id,
+            'created_date': self.created_date,
+            'updated_date': self.updated_date,
+            'user_role': self.user_role.name,
+            'user_login': self.user_login,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'userpic': self.userpic if self.userpic else None,
+            'user_summary': self.user_summary,
+        }
