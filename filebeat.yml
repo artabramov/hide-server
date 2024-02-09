@@ -37,7 +37,7 @@ filebeat.modules:
       var.password: "admin"
 
 filebeat.inputs:
-  - type: filestream
+  - type: log
     processors:
     - dissect:
       tokenizer: "elapsed_time=%{elapsed_time},"
