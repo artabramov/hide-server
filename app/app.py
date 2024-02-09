@@ -45,9 +45,9 @@ async def add_process_time_header(request: Request, call_next):
 
     response = await call_next(request)
 
-    request_elapsed_time = time.time() - ctx.request_start_time
-    log.debug("Response sent, request_elapsed_time=%s, status=%s, headers=%s." % (
-        request_elapsed_time, response.status_code, str(response.headers.raw)))
+    elapsed_time = time.time() - ctx.request_start_time
+    log.debug("Response sent, elapsed_time=%s, status=%s, headers=%s." % (
+        elapsed_time, response.status_code, str(response.headers.raw)))
 
     return response
 
