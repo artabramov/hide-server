@@ -11,6 +11,11 @@ filebeat.inputs:
         field: "message"
         target_prefix: "dissect"
         ignore_failure: true
+    - dissect:
+        tokenizer: "%{} event_type=%{event_type}, %{}"
+        field: "message"
+        target_prefix: "dissect"
+        ignore_failure: true
 
 output.elasticsearch:
   enabled: true
