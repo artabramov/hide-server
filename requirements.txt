@@ -1,3 +1,4 @@
+aiofiles==23.2.1
 annotated-types==0.6.0
 anyio==4.2.0
 async-timeout==4.0.3
@@ -10,6 +11,7 @@ distro==1.7.0
 distro-info==1.1+ubuntu0.2
 exceptiongroup==1.2.0
 fastapi==0.109.1
+filetype==1.2.0
 greenlet==3.0.3
 h11==0.14.0
 httplib2==0.20.2
@@ -22,13 +24,17 @@ lazr.restfulclient==0.14.4
 lazr.uri==1.0.6
 more-itertools==8.10.0
 oauthlib==3.2.0
-pydantic==2.6.0
-pydantic_core==2.16.1
+pillow==10.2.0
+pydantic==2.6.1
+pydantic_core==2.16.2
 PyGObject==3.42.1
 PyJWT==2.3.0
+pyotp==2.9.0
 pyparsing==2.4.7
+pypng==0.20220715.0
 python-apt==2.4.0+ubuntu2
 python-dotenv==1.0.1
+qrcode==7.4.2
 redis==5.0.1
 SecretStorage==3.3.1
 six==1.16.0
