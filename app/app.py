@@ -8,7 +8,6 @@ from app.routers import user_routers
 from app.config import get_cfg
 from app.logger import get_log
 from uuid import uuid4
-import os
 import time
 from app.session import Base, async_engine
 from app.errors import E
@@ -38,7 +37,6 @@ async def add_process_time_header(request: Request, call_next):
     ctx = get_ctx()
     ctx.request_start_time = time.time()
     ctx.trace_request_uuid = str(uuid4())
-    ctx.pid = os.getpid()
 
     log.debug("Request received, method=%s, url=%s, headers=%s." % (
         request.method, str(request.url), str(request.headers)))

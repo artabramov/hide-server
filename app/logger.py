@@ -15,7 +15,6 @@ class ContextualFilter(Filter):
     def filter(self, message: object) -> bool:
         """Customize the contextual filter."""
         message.trace_request_uuid = ctx.trace_request_uuid
-        message.pid = ctx.pid
         return True
 
 

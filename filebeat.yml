@@ -7,9 +7,10 @@ filebeat.inputs:
     - /var/log/hide/*.log*
   processors:
     - dissect:
-        tokenizer: "elapsed_time=%{elapsed_time},"
+        tokenizer: "%{} elapsed_time=%{elapsed_time}, %{}"
         field: "message"
         target_prefix: "dissect"
+        ignore_failure: true
 
 output.elasticsearch:
   enabled: true
