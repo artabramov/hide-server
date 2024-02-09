@@ -39,7 +39,7 @@ filebeat.modules:
 filebeat.inputs:
   - type: log
     processors:
-    - dissect:
-      tokenizer: "elapsed_time=%{elapsed_time},"
-      field: "message"
-      target_prefix: "dissect"
+      - dissect:
+        tokenizer: "elapsed_time=%{elapsed_time},"
+        field: "message"
+        target_prefix: "dissect"
