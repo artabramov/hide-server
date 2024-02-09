@@ -5,6 +5,11 @@ filebeat.inputs:
     - /var/log/postgresql/*.log*
     - /var/log/redis/redis-server.log*
     - /var/log/hide/*.log*
+  processors:
+    - dissect:
+        tokenizer: "elapsed_time=%{elapsed_time},"
+        field: "message"
+        target_prefix: "dissect"
 
 output.elasticsearch:
   enabled: true
@@ -35,11 +40,3 @@ filebeat.modules:
       enabled: true
       var.hosts: ["host.docker.internal:6378"]
       var.password: "admin"
-
-filebeat.inputs:
-  - type: log
-    processors:
-      - dissect:
-        tokenizer: "elapsed_time=%{elapsed_time},"
-        field: "message"
-        target_prefix: "dissect"
