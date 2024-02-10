@@ -44,7 +44,13 @@ class TokenSelectSchema(BaseModel):
     exp: Optional[int] = None
 
 
-class UserSelectSchema(BaseModel):
-    """Pydantic schema for user selection request."""
+class UsersListSchema(BaseModel):
+    """Pydantic schema for users list request."""
 
-    id: int
+    user_role__eq: Optional[UserRole] = None
+    user_login__eq: Optional[str] = None
+    full_name__ilike: Optional[str] = None
+    offset: int = 0
+    limit: int = Field(1, ge=1, le=200)
+    order_by: Literal["id", "created_date", "updated_date", "user_login", "first_name", "last_name"] = "id"
+    order: Literal["asc", "desc"] = "desc"

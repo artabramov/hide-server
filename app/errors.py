@@ -21,3 +21,4 @@ class E:
     VALUE_EMPTY = "The value is empty"
     VALUE_EXISTS = "The value already exists"
     VALUE_INVALID = "The value is invalid"
+    VALUE_LOCKED = "The value is locked"

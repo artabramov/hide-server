@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends
+from fastapi.exceptions import RequestValidationError
 from app.session import get_session
 from app.cache import get_cache
-from app.schemas.user_schemas import UserSchema, UserSelectSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema
+from app.schemas.user_schemas import UserSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema, UsersListSchema
 from app.repositories.user_repository import UserRepository
-from app.auth import auth_reader
+from app.auth import auth_admin, auth_reader
+from app.errors import E
 
 router = APIRouter()
 
@@ -19,17 +21,47 @@ async def user_register(session = Depends(get_session), cache = Depends(get_cach
     }
 
 
-@router.get('/user/{id}', tags=['users'], response_model=UserSchema)
-async def user_select(session = Depends(get_session), cache = Depends(get_cache),
-                      schema = Depends(UserSelectSchema), current_user=Depends(auth_reader)):
+@router.get('/user/{user_id}', tags=['users'], response_model=UserSchema)
+async def user_select(user_id: int, session = Depends(get_session), cache = Depends(get_cache),
+                      current_user=Depends(auth_reader)):
     """Select a user."""
     user_repository = UserRepository(session, cache)
-    user = await user_repository.select(schema.id)
+    user = await user_repository.select(user_id)
     return user.to_dict()
 
 
+@router.delete('/user/{user_id}', tags=['users'])
+async def user_delete(user_id: int, session = Depends(get_session), cache = Depends(get_cache),
+                      current_user=Depends(auth_admin)):
+    """Delete user."""
+    if current_user.id == user_id:
+        raise RequestValidationError({"loc": ["path", "user_id"], "input": user_id,
+                                     "type": "value_locked", "msg": E.VALUE_LOCKED})
+
+    user_repository = UserRepository(session, cache)
+    user = await user_repository.select(user_id)
+    await user_repository.delete(user)
+    return {}
+
+
+@router.get('/users', tags=['users'])
+async def users_list(session = Depends(get_session), cache = Depends(get_cache),
+                     schema = Depends(UsersListSchema), current_user=Depends(auth_reader)):
+    """Get users list."""
+    user_repository = UserRepository(session, cache)
+
+    kwargs = {key[0]: key[1] for key in schema if key[1]}
+    users = await user_repository.select_all(**kwargs)
+    users_count = await user_repository.count_all(**kwargs)
+    return {
+        "users": [user.to_dict() for user in users],
+        "users_count": users_count,
+    }
+
+
+
 @router.get('/auth/login', tags=['auth'])
-async def user_login(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(UserLoginSchema)):
+async def login(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(UserLoginSchema)):
     """User login."""
     user_repository = UserRepository(session, cache)
     await user_repository.login(schema.user_login, schema.user_pass.get_secret_value())
@@ -39,7 +71,7 @@ async def user_login(session = Depends(get_session), cache = Depends(get_cache),
 
 
 @router.get('/auth/token', tags=['auth'])
-async def token_select(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(TokenSelectSchema)):
+async def get_token(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(TokenSelectSchema)):
     """Get JWT token."""
     user_repository = UserRepository(session, cache)
     user_token = await user_repository.token_select(schema.user_login, schema.user_totp, schema.exp)
@@ -49,7 +81,7 @@ async def token_select(session = Depends(get_session), cache = Depends(get_cache
 
 
 @router.delete('/auth/token', tags=['auth'])
-async def token_delete(session = Depends(get_session), cache = Depends(get_cache), current_user=Depends(auth_reader)):
+async def delete_token(session = Depends(get_session), cache = Depends(get_cache), current_user=Depends(auth_reader)):
     """Delete JWT token."""
     user_repository = UserRepository(session, cache)
     await user_repository.token_delete(current_user)

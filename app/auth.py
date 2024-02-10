@@ -43,12 +43,12 @@ async def _auth_user(user_token):
         user = await entity_manager.select_by(User, id__eq=jwt_payload["user_id"])
 
     if not user:
-        raise HTTPException(status_code=403, detail=E.jwt_rejected)
+        raise HTTPException(status_code=403, detail=E.JWT_REJECTED)
 
     await cache_manager.set(user)
 
     if jwt_payload["jti"] != user.jti:
-        raise HTTPException(status_code=403, detail=E.jwt_rejected)
+        raise HTTPException(status_code=403, detail=E.JWT_REJECTED)
 
     return user
 
@@ -57,7 +57,7 @@ async def auth_admin(user_token: Annotated[str, Depends(jwt_schema)]):
     """Authenticate admin user."""
     user = await _auth_user(user_token)
     if not user.can_admin:
-        raise HTTPException(status_code=403, detail=E.jwt_denied)
+        raise HTTPException(status_code=403, detail=E.JWT_DENIED)
 
     return user
 
@@ -66,7 +66,7 @@ async def auth_editor(user_token: Annotated[str, Depends(jwt_schema)]):
     """Authenticate editor user."""
     user = await _auth_user(user_token)
     if not user.can_edit:
-        raise HTTPException(status_code=403, detail=E.jwt_denied)
+        raise HTTPException(status_code=403, detail=E.JWT_DENIED)
 
     return user
 
@@ -75,7 +75,7 @@ async def auth_writer(user_token: Annotated[str, Depends(jwt_schema)]):
     """Authenticate writer user."""
     user = await _auth_user(user_token)
     if not user.can_write:
-        raise HTTPException(status_code=403, detail=E.jwt_denied)
+        raise HTTPException(status_code=403, detail=E.JWT_DENIED)
 
     return user
 
@@ -84,6 +84,6 @@ async def auth_reader(user_token: Annotated[str, Depends(jwt_schema)]):
     """Authenticate reader user."""
     user = await _auth_user(user_token)
     if not user.can_read:
-        raise HTTPException(status_code=403, detail=E.jwt_denied)
+        raise HTTPException(status_code=403, detail=E.JWT_DENIED)
 
     return user

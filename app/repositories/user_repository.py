@@ -54,12 +54,13 @@ class UserRepository:
         """User login."""
         entity_manager = EntityManager(self.session)
         user = await entity_manager.select_by(User, user_login__eq=user_login)
+        admin_exists = await entity_manager.exists(User, user_role__eq=UserRole.admin)
 
         if not user:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "value_invalid", "msg": E.LOGIN_INVALID})
 
-        elif user.user_role.name == UserRole.none.name:
+        elif user.user_role.name == UserRole.none.name and admin_exists:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
 
@@ -93,19 +94,28 @@ class UserRepository:
         """Get user token."""
         entity_manager = EntityManager(self.session)
         user = await entity_manager.select_by(User, user_login__eq=user_login)
+        admin_exists = await entity_manager.exists(User, user_role__eq=UserRole.admin)
 
         if not user:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "login_invalid", "msg": E.USER_LOGIN_INVALID})
+
+        elif user.user_role.name == UserRole.none.name and admin_exists:
+            raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
+                                          "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
 
         elif not user.pass_accepted:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
 
         if user_totp == MFAHelper.get_mfa_totp(user.mfa_key):
+            
+
             await MFAHelper.delete_mfa_image(user.mfa_key)
             user.mfa_attempts = 0
             user.pass_accepted = False
+            if not admin_exists:
+                user.user_role = UserRole.admin
             await entity_manager.update(user, commit=True)
             # await self.cache_manager.delete(user)
 
@@ -138,3 +148,29 @@ class UserRepository:
 
         await cache_manager.set(user)
         return user
+
+    async def delete(self, user: User):
+        """Delete user."""
+        entity_manager = EntityManager(self.session)
+        try:
+            await entity_manager.delete(user, commit=True)
+        except Exception:
+            raise RequestValidationError({"loc": ["path", "user_id"], "input": user.id,
+                                         "type": "value_locked", "msg": E.VALUE_LOCKED})
+
+        cache_manager = CacheManager(self.cache)
+        await cache_manager.delete(user)
+
+    async def select_all(self, **kwargs):
+        """Select all users."""
+        entity_manager = EntityManager(self.session)
+        users = await entity_manager.select_all(User, **kwargs)
+        # for user in users:
+        #     await self.cache_manager.set(user)
+        return users
+
+    async def count_all(self, **kwargs):
+        """Count users."""
+        entity_manager = EntityManager(self.session)
+        users_count = await entity_manager.count_all(User, **kwargs)
+        return users_count
