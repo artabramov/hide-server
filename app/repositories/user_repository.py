@@ -37,11 +37,10 @@ class UserRepository:
             jti = JWTHelper.create_jti()
             user = User(user_login, user_pass, first_name, last_name, mfa_key, jti)
             await entity_manager.insert(user)
-
-            # cache_manager = CacheManager(self.cache)
-            # await cache_manager.set(user)
-
             await entity_manager.commit()
+
+            cache_manager = CacheManager(self.cache)
+            await cache_manager.set(user)
 
         except Exception as e:
             await MFAHelper.delete_mfa_image(mfa_key)
@@ -73,7 +72,9 @@ class UserRepository:
             user.pass_attempts = 0
             user.pass_accepted = True
             await entity_manager.update(user, commit=True)
-            # await self.cache_manager.delete(user)
+            
+            cache_manager = CacheManager(self.cache)
+            await cache_manager.set(user)
 
         else:
             user.suspended_date = 0
@@ -84,7 +85,9 @@ class UserRepository:
                 user.pass_attempts = 0
 
             await entity_manager.update(user, commit=True)
-            # await self.cache_manager.delete(user)
+
+            cache_manager = CacheManager(self.cache)
+            await cache_manager.set(user)
 
             raise RequestValidationError({"loc": ["query", "user_pass"], "input": user_pass,
                                           "type": "value_invalid", "msg": E.USER_PASS_INVALID})
@@ -117,7 +120,9 @@ class UserRepository:
             if not admin_exists:
                 user.user_role = UserRole.admin
             await entity_manager.update(user, commit=True)
-            # await self.cache_manager.delete(user)
+
+            cache_manager = CacheManager(self.cache)
+            await cache_manager.set(user)
 
             user_token = JWTHelper.encode_token(user.id, user.user_role.name, user.user_login, user.jti, exp)
             return user_token
@@ -129,7 +134,9 @@ class UserRepository:
                 user.pass_accepted = False
 
             await entity_manager.update(user, commit=True)
-            # await self.cache_manager.delete(user)
+
+            cache_manager = CacheManager(self.cache)
+            await cache_manager.set(user)
 
             raise RequestValidationError({"loc": ["query", "user_totp"], "input": user_totp,
                                           "type": "value_invalid", "msg": E.USER_TOTP_INVALID})
@@ -139,6 +146,7 @@ class UserRepository:
         """Select user."""
         cache_manager = CacheManager(self.cache)
         user = await cache_manager.get(User, user_id)
+
         if not user:
             entity_manager = EntityManager(self.session)
             user = await entity_manager.select(User, user_id)
@@ -165,8 +173,10 @@ class UserRepository:
         """Select all users."""
         entity_manager = EntityManager(self.session)
         users = await entity_manager.select_all(User, **kwargs)
-        # for user in users:
-        #     await self.cache_manager.set(user)
+
+        cache_manager = CacheManager(self.cache)
+        for user in users:
+            await cache_manager.set(user)
         return users
 
     async def count_all(self, **kwargs):
