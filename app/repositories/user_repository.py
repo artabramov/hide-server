@@ -112,7 +112,6 @@ class UserRepository:
                                           "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
 
         if user_totp == MFAHelper.get_mfa_totp(user.mfa_key):
-            
 
             await MFAHelper.delete_mfa_image(user.mfa_key)
             user.mfa_attempts = 0

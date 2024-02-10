@@ -53,7 +53,7 @@ async def add_process_time_header(request: Request, call_next):
 @app.exception_handler(Exception)
 async def validation_exception_handler(request: Request, e: Exception):
     """Process validation error."""
-    log.error('Internal server error, exception=%s.' % str(e))
+    log.error('Internal server error, log_tag=error, exception=%s.' % str(e))
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=jsonable_encoder({"detail": E.INTERNAL_SERVER_ERROR}),

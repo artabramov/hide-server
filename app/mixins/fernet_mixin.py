@@ -2,8 +2,11 @@
 
 from cryptography.fernet import Fernet
 from app.config import get_cfg
+from app.logger import get_log
+from time import time
 
 cfg = get_cfg()
+log = get_log()
 cipher_suite = Fernet(cfg.APP_FERNET_KEY)
 
 
@@ -17,13 +20,23 @@ class FernetMixin:
     
     def encrypt_value(self, value: str) -> str:
         """Encrypt string value."""
+        start_time = time()
         encoded_text = cipher_suite.encrypt(str.encode(value))
-        return encoded_text.decode()
+        res = encoded_text.decode()
+
+        log.debug("Encrypt value, log_tag=fernet, elapsed_time=%s, value=%s, res=%s." % (
+            time() - start_time, value, res))
+        return res
 
     def decrypt_value(self, value: str) -> str:
         """Decrypt string value."""
+        start_time = time()
         decoded_text = cipher_suite.decrypt(str.encode(value))
-        return decoded_text.decode()
+        res = decoded_text.decode()
+
+        log.debug("Decrypt value, log_tag=fernet, elapsed_time=%s, value=%s, res=%s." % (
+            time() - start_time, value, res))
+        return res
 
     # async def encrypt_file(self, path: str) -> None:
     #     """Encrypt file."""

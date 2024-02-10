@@ -6,6 +6,7 @@ from app.config import get_cfg
 from app.managers.file_manager import FileManager
 from app.logger import get_log
 import os
+from time import time
 
 cfg = get_cfg()
 log = get_log()
@@ -34,12 +35,15 @@ class MFAHelper:
         qr.make(fit=cfg.MFA_FIT)
         img = qr.make_image(fill_color=cfg.MFA_COLOR, back_color=cfg.MFA_BACKGROUND)
         path = os.path.join(cfg.MFA_PATH, mfa_key + cfg.MFA_EXTENSION)
+        
+        start_time = time()
         img.save(path)
-        log.debug("Create MFA image, path=%s." % path)
+
+        log.debug("Save MFA image, log_tag=fileio, elapsed_time=%s, path=%s." % (
+            time() - start_time, path))
 
     @staticmethod
     async def delete_mfa_image(mfa_key: str) -> None:
         """Delete MFA image."""
         path = os.path.join(cfg.MFA_PATH, mfa_key + cfg.MFA_EXTENSION)
         await FileManager.file_delete(path)
-        log.debug("Delete MFA image, path=%s." % path)
