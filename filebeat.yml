@@ -11,11 +11,13 @@ filebeat.inputs:
         field: "message"
         target_prefix: "dissect"
         ignore_failure: true
+        trim_values: true
     - dissect:
         tokenizer: "%{} log_tag=%{log_tag}, %{}"
         field: "message"
         target_prefix: "dissect"
         ignore_failure: true
+        trim_values: true
 
 output.elasticsearch:
   enabled: true
