@@ -1,11 +1,7 @@
-# up the project twice to create
-# default Postgres user credentials
 install:
 	docker build --no-cache -t hide-server .
 	docker-compose up -d
 
 	docker exec hide-server sudo -u postgres psql -c "CREATE USER hide WITH PASSWORD 'he7w2rLY4Y8pFk2u';"
 	docker exec hide-server sudo -u postgres psql -c "CREATE DATABASE hide;"
-	docker-compose stop
-
-	docker-compose up -d
+	docker compose restart hide-server
