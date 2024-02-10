@@ -38,13 +38,13 @@ async def add_process_time_header(request: Request, call_next):
     ctx.request_start_time = time.time()
     ctx.trace_request_uuid = str(uuid4())
 
-    log.debug("Request received, method=%s, url=%s, headers=%s." % (
+    log.debug("Request received, log_tag=request, method=%s, url=%s, headers=%s." % (
         request.method, str(request.url), str(request.headers)))
 
     response = await call_next(request)
 
     elapsed_time = time.time() - ctx.request_start_time
-    log.debug("Response sent, elapsed_time=%s, status=%s, headers=%s." % (
+    log.debug("Response sent, log_tag=response, elapsed_time=%s, status=%s, headers=%s." % (
         elapsed_time, response.status_code, str(response.headers.raw)))
 
     return response
