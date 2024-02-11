@@ -74,7 +74,7 @@ class EntityManager:
         """Update SQLAlchemy object in Postgres database."""
         start_time = time()
 
-        self.session.merge(obj)
+        await self.session.merge(obj)
         await self.session.flush()
 
         log.debug("Update in postgres, log_tag=postgres, elapsed_time=%s, cls=%s, obj=%s." % (

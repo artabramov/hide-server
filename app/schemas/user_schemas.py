@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field, SecretStr, validator
 from fastapi import Query, File, UploadFile
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Union
 from app.models.user_models import UserRole
 from fastapi.exceptions import RequestValidationError
 from app.errors import E
@@ -22,6 +22,15 @@ class UserSchema(BaseModel):
     user_summary: Optional[str] = None
 
 
+def validate_user_pass(secret_value):
+    value = secret_value.get_secret_value()
+    if any(x.isupper() for x in value) and any(x.islower() for x in value) and any(x.isdigit() for x in value):
+        return secret_value
+    
+    raise RequestValidationError({"loc": ["query", "user_pass"], "input": value,
+                                    "type": "too_easy", "msg": E.USER_PASS_EASY})
+
+
 class UserRegisterSchema(BaseModel):
     """Pydantic schema for user registration request."""
 
@@ -31,14 +40,8 @@ class UserRegisterSchema(BaseModel):
     last_name: str = Query(..., min_length=2, max_length=40)
 
     @validator("user_pass")
-    def validate_user_pass(cls, secret_value):
-        value = secret_value.get_secret_value()
-        if any(x.isupper() for x in value) and any(x.islower() for x in value) and any(x.isdigit() for x in value):
-            return value
-        
-        raise RequestValidationError({"loc": ["query", "user_pass"], "input": value,
-                                      "type": "too_easy", "msg": E.USER_PASS_EASY})
-    
+    def user_pass_validator(cls, secret_value):
+        return validate_user_pass(secret_value)
 
 
 class UserLoginSchema(BaseModel):
@@ -67,10 +70,9 @@ class UsersListSchema(BaseModel):
     order_by: Literal["id", "created_date", "updated_date", "user_login", "first_name", "last_name"] = "id"
     order: Literal["asc", "desc"] = "desc"
 
-# class UserUpdateSchema(BaseModel):
-#     """Pydantic schema for user updation request."""
+class UserUpdateSchema(BaseModel):
+    """Pydantic schema for user updation request."""
 
-#     user_pass: SecretStr = Query(..., min_length=6)
-#     first_name: str = Query(..., min_length=2, max_length=40)
-#     last_name: str = Query(..., min_length=2, max_length=40)
-#     user_summary: Optional[str] = Query(..., max_length=512)
+    first_name: str = Query(..., min_length=2, max_length=40)
+    last_name: str = Query(..., min_length=2, max_length=40)
+    user_summary: Optional[str] = Query(default=None, max_length=512)

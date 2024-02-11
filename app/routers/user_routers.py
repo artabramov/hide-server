@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import RequestValidationError
 from app.session import get_session
 from app.cache import get_cache
-from app.schemas.user_schemas import UserSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema, UsersListSchema
+from app.schemas.user_schemas import UserSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema, UserUpdateSchema, UsersListSchema
 from app.repositories.user_repository import UserRepository
 from app.auth import auth_admin, auth_reader
 from app.errors import E
@@ -28,6 +28,15 @@ async def user_select(user_id: int, session = Depends(get_session), cache = Depe
     user_repository = UserRepository(session, cache)
     user = await user_repository.select(user_id)
     return user.to_dict()
+
+
+@router.put('/user', tags=['users'])
+async def user_update(session = Depends(get_session), cache = Depends(get_cache),
+                      schema = Depends(UserUpdateSchema), current_user=Depends(auth_reader)):
+    """Update current user."""
+    user_repository = UserRepository(session, cache)
+    await user_repository.update(current_user, schema.first_name, schema.last_name, user_summary=schema.user_summary)
+    return {}
 
 
 @router.delete('/user/{user_id}', tags=['users'])
@@ -57,7 +66,6 @@ async def users_list(session = Depends(get_session), cache = Depends(get_cache),
         "users": [user.to_dict() for user in users],
         "users_count": users_count,
     }
-
 
 
 @router.get('/auth/login', tags=['auth'])

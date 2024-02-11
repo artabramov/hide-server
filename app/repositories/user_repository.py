@@ -156,6 +156,18 @@ class UserRepository:
         await cache_manager.set(user)
         return user
 
+    async def update(self, user: User, first_name: str, last_name: str, user_summary: str = None):
+        """Update user."""
+        user.first_name = first_name
+        user.last_name = last_name
+        user.user_summary = user_summary
+        
+        entity_manager = EntityManager(self.session)
+        await entity_manager.update(user, commit=True)
+
+        cache_manager = CacheManager(self.cache)
+        await cache_manager.set(user)
+
     async def delete(self, user: User):
         """Delete user."""
         entity_manager = EntityManager(self.session)
