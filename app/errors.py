@@ -9,6 +9,7 @@ class E:
     USER_LOGIN_INVALID = "User login is invalid"
     USER_LOGIN_DENIED = "Login denied due to user role permissions"
     USER_LOGIN_SUSPENDED = "Login attempts are temporarily suspended"
+    USER_PASS_EASY = "User password must contain uppercase letters, lowercase letters, and numbers"
     USER_PASS_INVALID = "User password is invalid"
     USER_TOTP_INVALID = "Time-based one-time password is invalid"
 
