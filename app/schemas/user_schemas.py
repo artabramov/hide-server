@@ -76,3 +76,13 @@ class UserUpdateSchema(BaseModel):
     first_name: str = Query(..., min_length=2, max_length=40)
     last_name: str = Query(..., min_length=2, max_length=40)
     user_summary: Optional[str] = Query(default=None, max_length=512)
+
+
+class PassUpdateSchema(BaseModel):
+
+    user_pass: SecretStr = Query(..., min_length=6)
+    user_pass_new: SecretStr = Query(..., min_length=6)
+
+    @validator("user_pass_new")
+    def user_pass_new_validator(cls, secret_value):
+        return validate_user_pass(secret_value)

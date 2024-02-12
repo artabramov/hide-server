@@ -90,7 +90,7 @@ class UserRepository:
             await cache_manager.set(user)
 
             raise RequestValidationError({"loc": ["query", "user_pass"], "input": user_pass,
-                                          "type": "value_invalid", "msg": E.USER_PASS_INVALID})
+                                          "type": "pass_invalid", "msg": E.USER_PASS_INVALID})
 
 
     async def token_select(self, user_login: str, user_totp: str, exp: int = None) -> str:
@@ -167,6 +167,21 @@ class UserRepository:
 
         cache_manager = CacheManager(self.cache)
         await cache_manager.set(user)
+
+    async def pass_update(self, user: User, user_pass: str, user_pass_new: str):
+        """Update user password."""
+        if user.pass_hash != HashHelper.get_hash(user_pass):
+            raise RequestValidationError({"loc": ["query", "user_pass"], "input": user_pass,
+                                          "type": "pass_invalid", "msg": E.USER_PASS_INVALID})
+
+        user.user_pass = user_pass_new
+        
+        entity_manager = EntityManager(self.session)
+        await entity_manager.update(user, commit=True)
+
+        cache_manager = CacheManager(self.cache)
+        await cache_manager.set(user)
+
 
     async def delete(self, user: User):
         """Delete user."""

@@ -51,7 +51,7 @@ class User(Base, FernetMixin):
         self.suspended_date = 0
         self.user_role = UserRole.none
         self.user_login = user_login
-        self.pass_hash = HashHelper.get_hash(user_pass.get_secret_value())
+        self.user_pass = user_pass
         self.first_name = first_name
         self.last_name = last_name
         self.pass_attempts = 0
@@ -59,6 +59,13 @@ class User(Base, FernetMixin):
         self.mfa_key = mfa_key
         self.mfa_attempts = 0
         self.jti = jti
+
+    def __setattr__(self, key: str, value):
+        """Set pass hash."""
+        if key == 'user_pass':
+            self.pass_hash = HashHelper.get_hash(value)
+        else:
+            super().__setattr__(key, value)
 
     @property
     def mfa_key(self):
