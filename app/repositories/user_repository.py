@@ -59,7 +59,7 @@ class UserRepository:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "value_invalid", "msg": E.LOGIN_INVALID})
 
-        elif user.user_role.name == UserRole.none.name and admin_exists:
+        elif user.user_role.name == UserRole.denied.name and admin_exists:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
 
@@ -103,7 +103,7 @@ class UserRepository:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "login_invalid", "msg": E.USER_LOGIN_INVALID})
 
-        elif user.user_role.name == UserRole.none.name and admin_exists:
+        elif user.user_role.name == UserRole.denied.name and admin_exists:
             raise RequestValidationError({"loc": ["query", "user_login"], "input": user_login,
                                           "type": "login_denied", "msg": E.USER_LOGIN_DENIED})
 

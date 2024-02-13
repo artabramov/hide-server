@@ -15,7 +15,7 @@ cfg = get_cfg()
 class UserRole(enum.Enum):
     """SQLAlchemy model for user role."""
 
-    none = "none"
+    denied = "denied"
     reader = "reader"
     writer = "writer"
     editor = "editor"
@@ -32,7 +32,7 @@ class User(Base, FernetMixin):
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
     updated_date = Column(Integer, nullable=False, index=True, default=0, onupdate=lambda: int(time()))
     suspended_date = Column(Integer, nullable=False, default=0)
-    user_role = Column(Enum(UserRole), nullable=False, index=True, default=UserRole.none)
+    user_role = Column(Enum(UserRole), nullable=False, index=True, default=UserRole.denied)
     user_login = Column(String(40), nullable=False, index=True, unique=True)
     first_name = Column(String(40), nullable=False, index=True)
     last_name = Column(String(40), nullable=False, index=True)
@@ -49,7 +49,7 @@ class User(Base, FernetMixin):
     def __init__(self, user_login: str, user_pass: str, first_name: str, last_name: str, mfa_key: str, jti: str):
         """Init user SQLAlchemy object."""
         self.suspended_date = 0
-        self.user_role = UserRole.none
+        self.user_role = UserRole.denied
         self.user_login = user_login
         self.user_pass = user_pass
         self.first_name = first_name
