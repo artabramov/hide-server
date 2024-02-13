@@ -86,3 +86,9 @@ class PassUpdateSchema(BaseModel):
     @validator("user_pass_new")
     def user_pass_new_validator(cls, secret_value):
         return validate_user_pass(secret_value)
+
+
+class RoleUpdateSchema(BaseModel):
+    """Pydantic schema for role updation request."""
+
+    user_role: UserRole

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import RequestValidationError
 from app.session import get_session
 from app.cache import get_cache
-from app.schemas.user_schemas import UserSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema, UserUpdateSchema, PassUpdateSchema, UsersListSchema
+from app.schemas.user_schemas import UserSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema, UserUpdateSchema, PassUpdateSchema, RoleUpdateSchema, UsersListSchema
 from app.repositories.user_repository import UserRepository
 from app.auth import auth_admin, auth_reader
 from app.errors import E
@@ -77,6 +77,20 @@ async def update_password(session = Depends(get_session), cache = Depends(get_ca
                                       schema.user_pass_new.get_secret_value())
     return {}
 
+
+@router.put('/user/{user_id}/role', tags=['users'])
+async def update_role(user_id: int, session = Depends(get_session), cache = Depends(get_cache),
+                      current_user=Depends(auth_admin), schema = Depends(RoleUpdateSchema)):
+    """Update user role."""
+    if current_user.id == user_id:
+        raise RequestValidationError({"loc": ["path", "user_id"], "input": user_id,
+                                     "type": "value_locked", "msg": E.VALUE_LOCKED})
+
+    user_repository = UserRepository(session, cache)
+    user = await user_repository.select(user_id)
+    
+    await user_repository.role_update(user, schema.user_role)
+    return {}
 
 
 @router.delete('/user/{user_id}', tags=['users'])

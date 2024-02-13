@@ -175,7 +175,18 @@ class UserRepository:
                                           "type": "pass_invalid", "msg": E.USER_PASS_INVALID})
 
         user.user_pass = user_pass_new
-        
+
+        entity_manager = EntityManager(self.session)
+        await entity_manager.update(user, commit=True)
+
+        cache_manager = CacheManager(self.cache)
+        await cache_manager.set(user)
+
+
+    async def role_update(self, user: User, user_role: str):
+        """Update user role."""
+        user.user_role = user_role
+
         entity_manager = EntityManager(self.session)
         await entity_manager.update(user, commit=True)
 
