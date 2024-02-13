@@ -24,7 +24,6 @@ class Config:
     REDIS_HOST: str
     REDIS_PORT: int
     REDIS_EXPIRE: int
-    REDIS_DECODE: bool
 
     APP_TITLE: str
     APP_SUMMARY: str

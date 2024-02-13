@@ -9,8 +9,7 @@ cfg = get_cfg()
 async def get_cache():
     """Return SQLAlchemy session object."""
     try:
-        conn = redis.Redis(host=cfg.REDIS_HOST, port=cfg.REDIS_PORT, decode_responses=cfg.REDIS_DECODE)
+        conn = redis.Redis(host=cfg.REDIS_HOST, port=cfg.REDIS_PORT, decode_responses=False)
         yield conn
     finally:
         await conn.close()
-        pass
