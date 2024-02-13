@@ -9,9 +9,11 @@ from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper
 from fastapi import HTTPException, UploadFile
+from PIL import Image, ImageOps
 from app.errors import E
 from app.config import get_cfg
 import time
+import os
 
 cfg = get_cfg()
 
@@ -230,16 +232,17 @@ class UserRepository:
             raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
                                           "type": "file_mime", "msg": E.FILE_MIME_INVALID})
 
-        # meta_repository = MetaRepository(self.entity_manager)
-        # userpic_dir = FileManager.path_join(config.APPDATA_PATH, config.USERPIC_DIR)
-
         userpic = await FileManager.file_upload(file, cfg.USERPIC_PATH)
-        pass
-        # userpic_path = FileManager.path_join(userpic_dir, userpic)
+        userpic_path = os.path.join(cfg.USERPIC_PATH, userpic)
 
-        # image = Image.open(userpic_path)
-        # image.thumbnail(tuple([config.USERPIC_WIDTH, config.USERPIC_HEIGHT]))
-        # image.save(userpic_path, image_quality=config.USERPIC_QUALITY)
+        original_image = Image.open(userpic_path)
+        userpic_image = ImageOps.fit(original_image, tuple([cfg.USERPIC_WIDTH, cfg.USERPIC_HEIGHT]), Image.LANCZOS)
+        userpic_image.save(userpic_path, image_quality=cfg.USERPIC_QUALITY)
 
-        # await meta_repository.set(UserMeta, user.id, "userpic", userpic, commit=True)
-        # await self.cache_manager.delete(user)
+        user.userpic = userpic
+
+        entity_manager = EntityManager(self.session)
+        await entity_manager.update(user, commit=True)
+
+        cache_manager = CacheManager(self.cache)
+        await cache_manager.set(user)

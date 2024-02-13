@@ -18,6 +18,7 @@ RUN pip3 install pyotp==2.9.0
 RUN pip3 install qrcode[pil]==7.4.2
 RUN pip3 install aiofiles==23.2.1
 RUN pip3 install filetype==1.2.0
+RUN pip3 install python-multipart==0.0.9
 RUN pip3 install python-dotenv==1.0.1
 RUN pip3 freeze > /hide/requirements.txt
 

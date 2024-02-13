@@ -3,3 +3,6 @@ __pycache__/
 
 data/mfa/*
 !data/mfa/.gitkeep
+
+data/userpics/*
+!data/userpics/.gitkeep

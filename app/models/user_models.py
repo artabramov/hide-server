@@ -122,6 +122,6 @@ class User(Base, FernetMixin):
             'user_login': self.user_login,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'userpic': self.userpic if self.userpic else None,
+            'userpic': cfg.USERPIC_URL + self.userpic if self.userpic else None,
             'user_summary': self.user_summary,
         }
