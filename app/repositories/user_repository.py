@@ -3,6 +3,7 @@
 from fastapi.exceptions import RequestValidationError
 from app.managers.entity_manager import EntityManager
 from app.managers.cache_manager import CacheManager
+from app.managers.file_manager import FileManager
 from app.models.user_models import User, UserRole
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
@@ -221,3 +222,24 @@ class UserRepository:
         entity_manager = EntityManager(self.session)
         users_count = await entity_manager.count_all(User, **kwargs)
         return users_count
+
+
+    async def userpic_upload(self, user: User, file: UploadFile):
+        """Upload userpic."""
+        if file.content_type not in cfg.USERPIC_MIMES:
+            raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
+                                          "type": "file_mime", "msg": E.FILE_MIME_INVALID})
+
+        # meta_repository = MetaRepository(self.entity_manager)
+        # userpic_dir = FileManager.path_join(config.APPDATA_PATH, config.USERPIC_DIR)
+
+        userpic = await FileManager.file_upload(file, cfg.USERPIC_PATH)
+        pass
+        # userpic_path = FileManager.path_join(userpic_dir, userpic)
+
+        # image = Image.open(userpic_path)
+        # image.thumbnail(tuple([config.USERPIC_WIDTH, config.USERPIC_HEIGHT]))
+        # image.save(userpic_path, image_quality=config.USERPIC_QUALITY)
+
+        # await meta_repository.set(UserMeta, user.id, "userpic", userpic, commit=True)
+        # await self.cache_manager.delete(user)

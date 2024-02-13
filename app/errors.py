@@ -23,3 +23,5 @@ class E:
     VALUE_EXISTS = "The value already exists"
     VALUE_INVALID = "The value is invalid"
     VALUE_LOCKED = "The value is locked"
+
+    FILE_MIME_INVALID = "The file mimetype is invalid."

@@ -52,6 +52,14 @@ class Config:
     USER_LOGIN_SUSPENDED_TIME: int
     USER_MFA_ATTEMPTS_LIMIT: int
 
+    USERPIC_URL: str
+    USERPIC_PREFIX: str
+    USERPIC_PATH: str
+    USERPIC_MIMES: list
+    USERPIC_WIDTH: int
+    USERPIC_HEIGHT: int
+    USERPIC_QUALITY: int
+
 
 @lru_cache
 def get_cfg() -> dict:
@@ -67,6 +75,9 @@ def get_cfg() -> dict:
 
         elif Config.__annotations__[key] == int:
             setattr(cfg, key, int(value))
+
+        elif Config.__annotations__[key] == list:
+            setattr(cfg, key, value.split(","))
 
         elif Config.__annotations__[key] == bytes:
             setattr(cfg, key, bytes(value, "utf-8"))

@@ -1,6 +1,5 @@
 """Cache manager."""
 
-from redis import Redis
 from sqlalchemy.ext.serializer import dumps, loads
 from app.logger import get_log
 from app.config import get_cfg
@@ -14,7 +13,7 @@ log = get_log()
 class CacheManager:
     """Cache Manager provides methods for working with Redis cache."""
 
-    def __init__(self, cache: Redis) -> None:
+    def __init__(self, cache) -> None:
         """Init Cache Manager."""
         self.cache = cache
 

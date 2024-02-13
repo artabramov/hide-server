@@ -1,6 +1,6 @@
 """File Manager."""
 
-# import os
+import os
 import uuid
 import shutil
 import filetype
@@ -67,11 +67,11 @@ class FileManager:
     #     file_name, _ = os.path.splitext(path)
     #     return file_name
 
-    # @staticmethod
-    # def file_ext(path: str) -> str:
-    #     """Get file extension."""
-    #     _, file_ext = os.path.splitext(path)
-    #     return file_ext
+    @staticmethod
+    def get_extension(path: str) -> str:
+        """Get file extension."""
+        _, ext = os.path.splitext(path)
+        return ext
 
     # @staticmethod
     # def file_mime(path: str) -> str:
@@ -125,17 +125,17 @@ class FileManager:
     #     os.system(cmd)
     #     log.debug('Execute command, cmd=%s' % cmd)
 
-    # @staticmethod
-    # async def file_upload(file: object, dir: str) -> str:
-    #     """Asynchronously upload a file under a unique filename and return the filename."""
-    #     filename = os.path.join(FileManager.uuid() + FileManager.file_ext(file.filename))
-    #     dst_path = os.path.join(dir, filename)
+    @staticmethod
+    async def file_upload(file: object, dir: str) -> str:
+        """Asynchronously upload a file under a unique filename and return the filename."""
+        filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(file.filename))
+        dst_path = os.path.join(dir, filename)
 
-    #     async with aiofiles.open(dst_path, "wb") as dst_file:
-    #         while content := await file.read(UPLOAD_CHUNK_SIZE):
-    #             await dst_file.write(content)
+        async with aiofiles.open(dst_path, "wb") as dst_file:
+            while content := await file.read(UPLOAD_CHUNK_SIZE):
+                await dst_file.write(content)
 
-    #     return filename
+        return filename
 
     # @staticmethod
     # def file_encrypt(base_path: str, filename: str, encryption_key: bytes) -> str:

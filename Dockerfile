@@ -9,8 +9,8 @@ RUN apt install -y software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get install -y python3-pip
 
-RUN pip3 install fastapi==0.109.1
-RUN pip3 install uvicorn==0.27.0.post1
+RUN pip3 install fastapi[all]==0.109.1
+RUN pip3 install uvicorn[standard]==0.27.0.post1
 RUN pip3 install SQLAlchemy==2.0.25
 RUN pip3 install asyncpg==0.29.0
 RUN pip3 install redis==5.0.1

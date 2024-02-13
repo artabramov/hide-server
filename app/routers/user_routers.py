@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import RequestValidationError
 from app.session import get_session
 from app.cache import get_cache
-from app.schemas.user_schemas import UserSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema, UserUpdateSchema, PassUpdateSchema, RoleUpdateSchema, UsersListSchema
+from app.schemas.user_schemas import UserSchema, UserRegisterSchema, UserLoginSchema, TokenSelectSchema, UserUpdateSchema, PassUpdateSchema, RoleUpdateSchema, UsersListSchema, UserpicUploadSchema
 from app.repositories.user_repository import UserRepository
 from app.auth import auth_admin, auth_reader
 from app.errors import E
@@ -120,3 +120,13 @@ async def users_list(session = Depends(get_session), cache = Depends(get_cache),
         "users": [user.to_dict() for user in users],
         "users_count": users_count,
     }
+
+
+@router.post('/userpic', tags=['users'])
+async def upload_userpic(session = Depends(get_session), cache = Depends(get_cache),
+                         schema = Depends(UserpicUploadSchema), current_user=Depends(auth_reader)):
+    """Upload userpic."""
+    user_repository = UserRepository(session, cache)
+    # await user_repository.userpic_delete(current_user)
+    await user_repository.userpic_upload(current_user, schema.file)
+    return {}

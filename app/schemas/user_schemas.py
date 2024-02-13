@@ -92,3 +92,9 @@ class RoleUpdateSchema(BaseModel):
     """Pydantic schema for role updation request."""
 
     user_role: UserRole
+
+
+class UserpicUploadSchema(BaseModel):
+    """Pydantic schema for userpic uploading request."""
+
+    file: UploadFile = File(...)
