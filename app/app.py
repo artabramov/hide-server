@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from app.context import get_ctx
 from app.routers import hello_routers
 from app.routers import user_routers
+from app.routers import album_routers
 from app.config import get_cfg
 from app.logger import get_log
 from uuid import uuid4
@@ -31,6 +32,7 @@ app.mount(cfg.MFA_PREFIX, StaticFiles(directory=cfg.MFA_PATH, html=False), name=
 app.mount(cfg.USERPIC_PREFIX, StaticFiles(directory=cfg.USERPIC_PATH, html=False), name=cfg.USERPIC_PATH)
 app.include_router(hello_routers.router, prefix=cfg.APP_PREFIX)
 app.include_router(user_routers.router, prefix=cfg.APP_PREFIX)
+app.include_router(album_routers.router, prefix=cfg.APP_PREFIX)
 
 
 @app.middleware("http")

@@ -7,6 +7,7 @@ from app.session import Base
 from sqlalchemy.ext.hybrid import hybrid_property
 from app.helpers.hash_helper import HashHelper
 from app.mixins.fernet_mixin import FernetMixin
+from sqlalchemy.orm import relationship
 from app.config import get_cfg
 
 cfg = get_cfg()
@@ -44,6 +45,7 @@ class User(Base, FernetMixin):
     userpic = Column(String(128), index=False, unique=True, nullable=True)
     user_summary = Column(String(512), index=False, nullable=True)
 
+    album = relationship("Album", back_populates="user")
 
     def __init__(self, user_login: str, user_pass: str, first_name: str, last_name: str, mfa_key: str, jti: str):
         """Init user SQLAlchemy object."""
