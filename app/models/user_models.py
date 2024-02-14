@@ -26,7 +26,6 @@ class User(Base, FernetMixin):
     """SQLAlchemy model for user."""
 
     __tablename__ = "users"
-    _encrypted_attrs = ["mfa_key", "jti"]
 
     id = Column(BigInteger, primary_key=True, index=True)
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
