@@ -239,6 +239,7 @@ class UserRepository:
         userpic_image = ImageOps.fit(original_image, tuple([cfg.USERPIC_WIDTH, cfg.USERPIC_HEIGHT]), Image.LANCZOS)
         userpic_image.save(userpic_path, image_quality=cfg.USERPIC_QUALITY)
 
+        await self.userpic_delete(user)
         user.userpic = userpic
 
         entity_manager = EntityManager(self.session)
@@ -246,3 +247,17 @@ class UserRepository:
 
         cache_manager = CacheManager(self.cache)
         await cache_manager.set(user)
+
+    async def userpic_delete(self, user: User):
+        """Delete userpic."""
+        if user.userpic:
+            userpic_path = os.path.join(cfg.USERPIC_PATH, user.userpic)
+            await FileManager.file_delete(userpic_path)
+
+            user.userpic = None
+
+            entity_manager = EntityManager(self.session)
+            await entity_manager.update(user, commit=True)
+
+            cache_manager = CacheManager(self.cache)
+            await cache_manager.set(user)

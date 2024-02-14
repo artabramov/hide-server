@@ -122,11 +122,18 @@ async def users_list(session = Depends(get_session), cache = Depends(get_cache),
     }
 
 
-@router.post('/userpic', tags=['users'])
+@router.post('/user/userpic', tags=['users'])
 async def upload_userpic(session = Depends(get_session), cache = Depends(get_cache),
                          schema = Depends(UserpicUploadSchema), current_user=Depends(auth_reader)):
     """Upload userpic."""
     user_repository = UserRepository(session, cache)
-    # await user_repository.userpic_delete(current_user)
     await user_repository.userpic_upload(current_user, schema.file)
+    return {}
+
+
+@router.delete('/user/userpic', tags=['users'])
+async def userpic_delete(session = Depends(get_session), cache = Depends(get_cache), current_user=Depends(auth_reader)):
+    """Delete userpic."""
+    user_repository = await UserRepository(session, cache)
+    await user_repository.userpic_delete(current_user)
     return {}

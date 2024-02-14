@@ -6,6 +6,7 @@ import shutil
 import filetype
 import aiofiles
 import aiofiles.os
+from time import time
 # import io
 # from app.helpers.fernet_helper import FernetHelper
 from app.logger import get_log
@@ -100,13 +101,6 @@ class FileManager:
     #     files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and not f.startswith('.')]
     #     return sorted(files)
 
-    @staticmethod
-    async def file_delete(path: str) -> None:
-        """Delete a file."""
-        if await aiofiles.os.path.isfile(path):
-            await aiofiles.os.unlink(path)
-            log.debug('Delete file, path=%s.' % path)
-
     # @staticmethod
     # async def file_copy(src_path: str, dst_path: str) -> None:
     #     """Copy file."""
@@ -129,13 +123,29 @@ class FileManager:
     async def file_upload(file: object, dir: str) -> str:
         """Asynchronously upload a file under a unique filename and return the filename."""
         filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(file.filename))
-        dst_path = os.path.join(dir, filename)
+        path = os.path.join(dir, filename)
 
-        async with aiofiles.open(dst_path, "wb") as dst_file:
+        start_time = time()
+
+        async with aiofiles.open(path, "wb") as fn:
             while content := await file.read(UPLOAD_CHUNK_SIZE):
-                await dst_file.write(content)
+                await fn.write(content)
+
+        log.debug("Upload file, log_tag=fileio, elapsed_time=%s, path=%s." % (
+            time() - start_time, path))
 
         return filename
+
+    @staticmethod
+    async def file_delete(path: str) -> None:
+        """Delete a file."""
+        if await aiofiles.os.path.isfile(path):
+            start_time = time()
+
+            res = await aiofiles.os.unlink(path)
+
+            log.debug("Delete file, log_tag=fileio, elapsed_time=%s, path=%s, res=%s." % (
+                time() - start_time, path, res))
 
     # @staticmethod
     # def file_encrypt(base_path: str, filename: str, encryption_key: bytes) -> str:
