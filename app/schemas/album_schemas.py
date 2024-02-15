@@ -16,7 +16,7 @@ class AlbumSchema(BaseModel):
     updated_date: int
     user_id: int
     album_name: str
-    album_summary: str
+    album_summary: Optional[str] = None
     mediafiles_count: int
     mediafiles_size: int
     user: dict

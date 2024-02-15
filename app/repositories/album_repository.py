@@ -50,17 +50,16 @@ class AlbumRepository:
         await cache_manager.set(album)
         return album
 
-    # async def update(self, user: User, first_name: str, last_name: str, user_summary: str = None):
-    #     """Update user."""
-    #     user.first_name = first_name
-    #     user.last_name = last_name
-    #     user.user_summary = user_summary
+    async def update(self, album: Album, album_name: str, album_summary: str = None):
+        """Update album."""
+        album.album_name = album_name
+        album.album_summary = album_summary
         
-    #     entity_manager = EntityManager(self.session)
-    #     await entity_manager.update(user, commit=True)
+        entity_manager = EntityManager(self.session)
+        await entity_manager.update(album, commit=True)
 
-    #     cache_manager = CacheManager(self.cache)
-    #     await cache_manager.set(user)
+        cache_manager = CacheManager(self.cache)
+        await cache_manager.set(album)
 
     # async def pass_update(self, user: User, user_pass: str, user_pass_new: str):
     #     """Update user password."""

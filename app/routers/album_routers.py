@@ -22,20 +22,21 @@ async def insert_album(session = Depends(get_session), cache = Depends(get_cache
 
 @router.get('/album/{album_id}', tags=['albums'], response_model=AlbumSchema)
 async def select_album(album_id: int, session = Depends(get_session), cache = Depends(get_cache),
-                      current_user=Depends(auth_reader)):
+                       current_user=Depends(auth_reader)):
     """Select an album."""
     album_repository = AlbumRepository(session, cache)
     album = await album_repository.select(album_id)
     return album.to_dict()
 
 
-# @router.put('/user', tags=['users'])
-# async def update_user(session = Depends(get_session), cache = Depends(get_cache),
-#                       schema = Depends(UserUpdateSchema), current_user=Depends(auth_reader)):
-#     """Update current user."""
-#     user_repository = UserRepository(session, cache)
-#     await user_repository.update(current_user, schema.first_name, schema.last_name, user_summary=schema.user_summary)
-#     return {}
+@router.put('/album/{album_id}', tags=['albums'])
+async def update_album(album_id: int, session = Depends(get_session), cache = Depends(get_cache),
+                       schema = Depends(AlbumEditSchema), current_user=Depends(auth_editor)):
+    """Update album."""
+    album_repository = AlbumRepository(session, cache)
+    album = await album_repository.select(album_id)
+    await album_repository.update(album, schema.album_name, album_summary=schema.album_summary)
+    return {}
 
 
 # @router.put('/user/pass', tags=['users'])
