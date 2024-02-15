@@ -29,4 +29,11 @@ class AlbumEditSchema(BaseModel):
     album_summary: Optional[str] = Query(default=None, max_length=512)
 
 
+class AlbumsListSchema(BaseModel):
+    """Pydantic schema for users list request."""
 
+    album_name__ilike: Optional[str] = None
+    offset: int = 0
+    limit: int = Query(..., ge=1, le=200)
+    order_by: Literal["id", "created_date", "updated_date", "album_name", "mediafiles_count", "mediafiles_size"] = "id"
+    order: Literal["asc", "desc"] = "desc"
