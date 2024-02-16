@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from app.managers.entity_manager import EntityManager
 from app.managers.cache_manager import CacheManager
 from app.managers.file_manager import FileManager
-from app.models.user_models import User, UserRole
+from app.models.user_model import User, UserRole
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper

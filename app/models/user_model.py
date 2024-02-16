@@ -46,6 +46,7 @@ class User(Base, FernetMixin):
     user_summary = Column(String(512), index=False, nullable=True)
 
     album = relationship("Album", back_populates="user")
+    media = relationship("Media", back_populates="user")
 
     def __init__(self, user_login: str, user_pass: str, first_name: str, last_name: str, mfa_key: str, jti: str):
         """Init user SQLAlchemy object."""

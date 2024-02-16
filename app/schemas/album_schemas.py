@@ -3,7 +3,7 @@
 from pydantic import BaseModel, Field, SecretStr, validator
 from fastapi import Query, File, UploadFile
 from typing import Optional, List, Literal, Union
-from app.models.user_models import UserRole
+from app.models.user_model import UserRole
 from fastapi.exceptions import RequestValidationError
 from app.errors import E
 

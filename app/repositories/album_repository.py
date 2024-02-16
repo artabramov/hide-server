@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from app.managers.entity_manager import EntityManager
 from app.managers.cache_manager import CacheManager
 from app.managers.file_manager import FileManager
-from app.models.album_models import Album
+from app.models.album_model import Album
 from fastapi import HTTPException, UploadFile
 from PIL import Image, ImageOps
 from app.errors import E

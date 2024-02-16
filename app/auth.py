@@ -11,7 +11,7 @@ from app.session import get_session
 from app.cache import get_cache
 from app.managers.entity_manager import EntityManager
 from app.managers.cache_manager import CacheManager
-from app.models.user_models import User
+from app.models.user_model import User
 from fastapi import HTTPException
 
 JWT_ERROR_LOC = ("header", "Authorization")
