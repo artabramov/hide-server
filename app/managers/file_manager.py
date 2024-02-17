@@ -7,11 +7,13 @@ import filetype
 import aiofiles
 import aiofiles.os
 from time import time
+from PIL import Image, ExifTags
+from types import SimpleNamespace
 # import io
 # from app.helpers.fernet_helper import FernetHelper
 from app.logger import get_log
 
-UPLOAD_CHUNK_SIZE = 1024
+AIOFILES_CHUNK_SIZE = 1024
 
 log = get_log()
 
@@ -62,11 +64,11 @@ class FileManager:
     #     """Get absolute path to file directory."""
     #     return os.path.dirname(os.path.abspath(path))
 
-    # @staticmethod
-    # def file_name(path: str) -> str:
-    #     """Get file path without extension."""
-    #     file_name, _ = os.path.splitext(path)
-    #     return file_name
+    @staticmethod
+    def get_filename(path: str) -> str:
+        """Get file name without extension."""
+        filename, _ = os.path.splitext(path)
+        return filename
 
     @staticmethod
     def get_extension(path: str) -> str:
@@ -74,16 +76,33 @@ class FileManager:
         _, ext = os.path.splitext(path)
         return ext
 
-    # @staticmethod
-    # def file_mime(path: str) -> str:
-    #     """Get file mimetype."""
-    #     kind = filetype.guess(path)
-    #     return kind.mime if kind else None
+    @staticmethod
+    def get_mimetype(path: str) -> str:
+        """Get file mimetype."""
+        kind = filetype.guess(path)
+        return kind.mime if kind else None
 
-    # @staticmethod
-    # def file_size(path: str) -> int:
-    #     """Get file size."""
-    #     return os.path.getsize(path)
+    @staticmethod
+    def get_filesize(path: str) -> int:
+        """Get file size."""
+        return os.path.getsize(path)
+    
+    # def get_meta(path: str):
+    #     """Get image data."""
+    #     im = Image.open(path)
+    #     meta = SimpleNamespace()
+    #     meta.bits = im.bits if hasattr(im, "bits") else None
+    #     meta.format = im.format
+    #     meta.size = im.size
+    #     meta.mode = im.mode
+    #     return meta
+
+    def get_exif(im: Image):
+        """Get image EXIF data."""
+        exif = im._getexif()
+        if exif:
+            return {ExifTags.TAGS[k]: v for k, v in im._getexif().items() if k in ExifTags.TAGS}
+        return {}
 
     # @staticmethod
     # def file_date(path: str) -> int:
@@ -101,11 +120,29 @@ class FileManager:
     #     files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and not f.startswith('.')]
     #     return sorted(files)
 
-    # @staticmethod
-    # async def file_copy(src_path: str, dst_path: str) -> None:
-    #     """Copy file."""
-    #     shutil.copyfile(src_path, dst_path)
-    #     log.debug('Copy file, src_path=%s, dst_path=%s' % (src_path, dst_path))
+    @staticmethod
+    async def file_copy(src_path: str, dst_dir: str) -> None:
+        """Copy file."""
+        dst_filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(src_path))
+        dst_path = os.path.join(dst_dir, dst_filename)
+
+        # create file objects for the source and destination
+        handle_src = await aiofiles.open(src_path, mode="r")
+        handle_dst = await aiofiles.open(dst_path, mode="w")
+
+        # get the number of bytes for the source
+        stat_src = await aiofiles.os.stat(src_path)
+        n_bytes = stat_src.st_size
+
+        # get the file descriptors for the source and destination files
+        fd_src = handle_src.fileno()
+        fd_dst = handle_dst.fileno()
+
+        await aiofiles.os.sendfile(fd_dst, fd_src, 0, n_bytes)
+        return dst_filename
+
+        # shutil.copyfile(src_path, dst_path)
+        # log.debug('Copy file, src_path=%s, dst_path=%s' % (src_path, dst_path))
 
     # @staticmethod
     # async def file_move(src_path: str, dst_path: str) -> None:
@@ -120,15 +157,15 @@ class FileManager:
     #     log.debug('Execute command, cmd=%s' % cmd)
 
     @staticmethod
-    async def file_upload(file: object, dir: str) -> str:
+    async def file_upload(file: object, dst_dir: str) -> str:
         """Asynchronously upload a file under a unique filename and return the filename."""
         filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(file.filename))
-        path = os.path.join(dir, filename)
+        path = os.path.join(dst_dir, filename)
 
         start_time = time()
 
         async with aiofiles.open(path, "wb") as fn:
-            while content := await file.read(UPLOAD_CHUNK_SIZE):
+            while content := await file.read(AIOFILES_CHUNK_SIZE):
                 await fn.write(content)
 
         log.debug("Upload file, log_tag=fileio, elapsed_time=%s, path=%s." % (

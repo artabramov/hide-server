@@ -118,10 +118,23 @@ class EntityManager:
 
         async_result = await self.session.execute(
             select(func.count()).select_from(select(cls).where(*self._where(cls, **kwargs))))
-        res = async_result.unique().scalars().one_or_none()
+        res = async_result.unique().scalars().one_or_none() or 0
 
         log.debug("Count all in postgres, log_tag=postgres, elapsed_time=%s, cls=%s, kwargs=%s, res=%s." % (
             time() - start_time, str(cls.__name__), str(kwargs), res))
+
+        return res
+
+    async def sum_all(self, cls: object, column: str, **kwargs):
+        """Sum SQLAlchemy object column in Postgres database."""
+        start_time = time()
+
+        async_result = await self.session.execute(
+            select(func.sum(getattr(cls, column))).select_from(select(cls).where(*self._where(cls, **kwargs))))
+        res = async_result.unique().scalars().one_or_none() or 0
+
+        log.debug("Sum all in postgres, log_tag=postgres, elapsed_time=%s, cls=%s, column=%s, kwargs=%s, res=%s." % (
+            time() - start_time, str(cls.__name__), column, str(kwargs), res))
 
         return res
 

@@ -59,6 +59,18 @@ class Config:
     USERPIC_HEIGHT: int
     USERPIC_QUALITY: int
 
+    MEDIA_URL: str
+    MEDIA_PREFIX: str
+    MEDIA_PATH: str
+    MEDIA_MIMES: list
+
+    THUMBNAIL_URL: str
+    THUMBNAIL_PREFIX: str
+    THUMBNAIL_PATH: str
+    THUMBNAIL_WIDTH: int
+    THUMBNAIL_HEIGHT: int
+    THUMBNAIL_QUALITY: int
+
 
 @lru_cache
 def get_cfg() -> dict:

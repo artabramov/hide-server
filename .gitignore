@@ -6,3 +6,9 @@ data/mfa/*
 
 data/userpics/*
 !data/userpics/.gitkeep
+
+data/media/*
+!data/media/.gitkeep
+
+data/thumbnails/*
+!data/thumbnails/.gitkeep

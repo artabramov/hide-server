@@ -17,8 +17,8 @@ class AlbumSchema(BaseModel):
     user_id: int
     album_name: str
     album_summary: Optional[str] = None
-    mediafiles_count: int
-    mediafiles_size: int
+    media_count: int
+    media_size: int
     user: dict
 
 
@@ -35,5 +35,5 @@ class AlbumsListSchema(BaseModel):
     album_name__ilike: Optional[str] = None
     offset: int = 0
     limit: int = Query(..., ge=1, le=200)
-    order_by: Literal["id", "created_date", "updated_date", "album_name", "mediafiles_count", "mediafiles_size"] = "id"
+    order_by: Literal["id", "created_date", "updated_date", "album_name", "media_count", "media_size"] = "id"
     order: Literal["asc", "desc"] = "desc"
