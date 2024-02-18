@@ -26,7 +26,7 @@ class Mediafile(Base):
 
     filename = Column(String(512), nullable=False, unique=True)
     mimetype = Column(String(512), nullable=False, index=True)
-    filesize = Column(Integer, nullable=False, index=True)
+    filesize = Column(BigInteger, nullable=False, index=True)
     width = Column(Integer, nullable=False, index=True)
     height = Column(Integer, nullable=False, index=True)
     format = Column(String(40), nullable=False, index=True)

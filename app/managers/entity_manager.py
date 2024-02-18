@@ -117,7 +117,7 @@ class EntityManager:
         start_time = time()
 
         async_result = await self.session.execute(
-            select(func.count()).select_from(select(cls).where(*self._where(cls, **kwargs))))
+            select(func.count(getattr(cls, "id"))).where(*self._where(cls, **kwargs)))
         res = async_result.unique().scalars().one_or_none() or 0
 
         log.debug("Count all in postgres, log_tag=postgres, elapsed_time=%s, cls=%s, kwargs=%s, res=%s." % (
@@ -130,23 +130,13 @@ class EntityManager:
         start_time = time()
 
         async_result = await self.session.execute(
-            select(func.sum(getattr(cls, column))).select_from(select(cls).where(*self._where(cls, **kwargs))))
+            select(func.sum(getattr(cls, column))).where(*self._where(cls, **kwargs)))
         res = async_result.unique().scalars().one_or_none() or 0
 
         log.debug("Sum all in postgres, log_tag=postgres, elapsed_time=%s, cls=%s, column=%s, kwargs=%s, res=%s." % (
             time() - start_time, str(cls.__name__), column, str(kwargs), res))
 
         return res
-
-    # async def sum_all(self, cls: object, column_name: str, **kwargs) -> Decimal:
-    #     """Sum SQLAlchemy objects column in Postgres database."""
-    #     query = self.session.query(func.sum(getattr(cls, column_name))).filter(*self._where(cls, **kwargs))
-    #     res = query.one()[0]
-
-    #     log.debug("Sum SQLAlchemy objects column in Postgres database, cls=%s, column_name=%s, kwargs=%s, sum=%s." % (
-    #         str(cls.__name__), column_name, str(kwargs), res))
-
-    #     return res
 
     async def exists(self, cls: object, **kwargs) -> bool:
         """Check if object exists in Postgres database."""
