@@ -194,6 +194,8 @@ class EntityManager:
                 if isinstance(value, str):
                     if operator == "in":
                         value = [x.strip() for x in value.split(",")]
+                    elif operator in ["like", "ilike"]:
+                        value = "%" + value + "%"
                     else:
                         value = value
 

@@ -42,7 +42,7 @@ async def update_media(mediafile_id: int, session = Depends(get_session), cache 
     album_repository = AlbumRepository(session, cache)
     album = await album_repository.select(schema.album_id)
 
-    await mediafile_repository.update(mediafile, album, schema.mediafile_name, mediafile_summary=schema.mediafile_summary)
+    await mediafile_repository.update(mediafile, album, schema.original_filename, mediafile_summary=schema.mediafile_summary)
     return {}
 
 

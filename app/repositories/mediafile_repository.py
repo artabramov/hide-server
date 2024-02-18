@@ -11,6 +11,7 @@ from app.models.attribute_model import Attribute
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper
+from app.helpers.tag_helper import TagHelper
 from fastapi import HTTPException, UploadFile
 from PIL import Image, ImageOps
 from app.errors import E
@@ -35,7 +36,7 @@ class MediafileRepository:
             raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
                                           "type": "file_mime", "msg": E.FILE_MIME_INVALID})
         
-        mediafile_name = file.filename
+        original_filename = file.filename
         mediafile_summary = None
 
         filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
@@ -58,7 +59,7 @@ class MediafileRepository:
 
         entity_manager = EntityManager(self.session)
 
-        mediafile = Mediafile(user.id, album.id, mediafile_name, filename, filesize, width, height, mimetype, format, mode,
+        mediafile = Mediafile(user.id, album.id, original_filename, filename, filesize, width, height, mimetype, format, mode,
                               thumbnail, mediafile_summary=None)
         await entity_manager.insert(mediafile, commit=True)
 
@@ -88,12 +89,12 @@ class MediafileRepository:
         await cache_manager.set(mediafile)
         return mediafile
 
-    async def update(self, mediafile: Mediafile, album: Album, mediafile_name: str, mediafile_summary: str = None):
+    async def update(self, mediafile: Mediafile, album: Album, original_filename: str, mediafile_summary: str = None):
         """Update album."""
         outdated_album_id = mediafile.album_id if mediafile.album_id != album.id else None
 
         mediafile.album_id = album.id
-        mediafile.mediafile_name = mediafile_name
+        mediafile.original_filename = original_filename
         mediafile.mediafile_summary = mediafile_summary
         
         entity_manager = EntityManager(self.session)
@@ -111,6 +112,12 @@ class MediafileRepository:
             await entity_manager.update(album)
 
         await entity_manager.commit()
+
+        # tags
+        if mediafile_summary:
+            tag_values = TagHelper.get_tags(mediafile_summary)
+            for tag_value in tag_values:
+                pass
 
         cache_manager = CacheManager(self.cache)
         await cache_manager.set(mediafile)
