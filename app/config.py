@@ -59,10 +59,10 @@ class Config:
     USERPIC_HEIGHT: int
     USERPIC_QUALITY: int
 
-    MEDIA_URL: str
-    MEDIA_PREFIX: str
-    MEDIA_PATH: str
-    MEDIA_MIMES: list
+    MEDIAFILE_URL: str
+    MEDIAFILE_PREFIX: str
+    MEDIAFILE_PATH: str
+    MEDIAFILE_MIMES: list
 
     THUMBNAIL_URL: str
     THUMBNAIL_PREFIX: str

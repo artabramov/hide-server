@@ -10,10 +10,10 @@ from app.config import get_cfg
 cfg = get_cfg()
 
 
-class Media(Base):
+class Mediafile(Base):
     """SQLAlchemy model for album."""
 
-    __tablename__ = "media"
+    __tablename__ = "mediafiles"
 
     id = Column(BigInteger, primary_key=True, index=True)
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
@@ -21,8 +21,8 @@ class Media(Base):
     user_id = Column(BigInteger, ForeignKey('users.id'), index=True, nullable=False)
     album_id = Column(BigInteger, ForeignKey('albums.id'), index=True, nullable=False)
 
-    media_name = Column(String(512), nullable=False, index=True)
-    media_summary = Column(String(512), index=False, nullable=True)
+    mediafile_name = Column(String(512), nullable=False, index=True)
+    mediafile_summary = Column(String(512), index=False, nullable=True)
 
     filename = Column(String(512), nullable=False, unique=True)
     mimetype = Column(String(512), nullable=False, index=True)
@@ -32,22 +32,22 @@ class Media(Base):
     format = Column(String(40), nullable=False, index=True)
     mode = Column(String(40), nullable=False, index=True)
 
-    # media_ext = Column(String(512), nullable=True, index=True)
+    # mediafile_ext = Column(String(512), nullable=True, index=True)
 
     thumbnail = Column(String(512), nullable=True, unique=True)
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
-    user = relationship("User", back_populates="media", lazy="joined")
-    album = relationship("Album", back_populates="media", lazy="joined")
-    exif = relationship("Exif", back_populates="media", lazy="joined", cascade="all,delete")
+    user = relationship("User", back_populates="mediafile", lazy="joined")
+    album = relationship("Album", back_populates="mediafile", lazy="joined")
+    attributes = relationship("Attribute", back_populates="mediafile", lazy="joined", cascade="all,delete")
 
-    def __init__(self, user_id: int, album_id: int, media_name: str, filename: str, filesize: int, width: int,
-                 height: int, mimetype: str,  format: str, mode: str, thumbnail: str, media_summary: str = None):
+    def __init__(self, user_id: int, album_id: int, mediafile_name: str, filename: str, filesize: int, width: int,
+                 height: int, mimetype: str,  format: str, mode: str, thumbnail: str, mediafile_summary: str = None):
         """Init user SQLAlchemy object."""
         self.user_id = user_id
         self.album_id = album_id
-        self.media_name = media_name
-        self.media_summary = media_summary
+        self.mediafile_name = mediafile_name
+        self.mediafile_summary = mediafile_summary
         self.filename = filename
         self.filesize = filesize
         self.width = width
@@ -63,12 +63,6 @@ class Media(Base):
             "id": self.id,
             "created_date": self.created_date,
             "updated_date": self.updated_date,
-            "media_name": self.media_name,
-            # "user_id": self.user_id,
-            # "album_name": self.album_name,
-            # "album_summary": self.album_summary,
-            # "media_count": self.media_count,
-            # "media_size": self.media_size,
-            # "user": self.user.to_dict(),
-            "exif": {x.exif_key: x.exif_value for x in self.exif},
+            "mediafile_name": self.mediafile_name,
+            "attributes": {x.attribute_key: x.attribute_value for x in self.attributes},
         }

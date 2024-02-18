@@ -46,7 +46,7 @@ async def delete_album(album_id: int, session = Depends(get_session), cache = De
     album_repository = AlbumRepository(session, cache)
     album = await album_repository.select(album_id)
 
-    if album.media_count > 0:
+    if album.mediafiles_count > 0:
         raise RequestValidationError({"loc": ["path", "album_id"], "input": album_id,
                                      "type": "value_locked", "msg": E.VALUE_LOCKED})
 

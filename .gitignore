@@ -7,8 +7,8 @@ data/mfa/*
 data/userpics/*
 !data/userpics/.gitkeep
 
-data/media/*
-!data/media/.gitkeep
+data/mediafiles/*
+!data/mediafiles/.gitkeep
 
 data/thumbnails/*
 !data/thumbnails/.gitkeep

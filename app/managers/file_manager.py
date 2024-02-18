@@ -97,10 +97,10 @@ class FileManager:
     #     meta.mode = im.mode
     #     return meta
 
-    def get_exif(im: Image):
-        """Get image EXIF data."""
-        exif = im._getexif()
-        if exif:
+    def get_attributes(im: Image):
+        """Get image attributes."""
+        attributes = im._getexif()
+        if attributes:
             return {ExifTags.TAGS[k]: v for k, v in im._getexif().items() if k in ExifTags.TAGS}
         return {}
 
