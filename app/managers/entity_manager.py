@@ -6,6 +6,7 @@ from sqlalchemy import select
 from decimal import Decimal
 from app.logger import get_log
 from time import time
+from app.decorators.timed_deco import timed
 
 _ORDER_BY, _ORDER = "order_by", "order"
 _ASC, _DESC = "asc", "desc"
@@ -47,6 +48,7 @@ class EntityManager:
         if commit:
             await self.commit()
 
+    @timed
     async def select(self, cls: object, obj_id: int) -> object:
         """Select SQLAlchemy object from Postgres database."""
         start_time = time()
