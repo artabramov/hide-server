@@ -6,7 +6,8 @@ from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.session import Base
 from app.config import get_cfg
-from app.models.tag_model import mediafiles_tags
+# from app.models.tag_model import mediafiles_tags
+from app.models.tag_model import MediafileTag
 
 cfg = get_cfg()
 
@@ -37,7 +38,7 @@ class Mediafile(Base):
     user = relationship("User", back_populates="mediafile", lazy="joined")
     album = relationship("Album", back_populates="mediafile", lazy="joined")
     metaparams = relationship("Metaparam", back_populates="mediafile", lazy="joined", cascade="all,delete")
-    tags = relationship("Tag", secondary=mediafiles_tags, back_populates="mediafiles", lazy="joined")
+    tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, filesize: int, width: int,
                  height: int, mimetype: str,  format: str, mode: str, thumbnail: str, mediafile_summary: str = None):

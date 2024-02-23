@@ -8,6 +8,7 @@ from app.models.user_model import User
 from app.models.album_model import Album
 from app.models.mediafile_model import Mediafile
 from app.models.metaparam_model import Metaparam
+from app.models.tag_model import Tag, MediafileTag
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper
@@ -117,7 +118,13 @@ class MediafileRepository:
         if mediafile_summary:
             tag_values = TagHelper.get_tags(mediafile_summary)
             for tag_value in tag_values:
-                pass
+                tag = Tag(tag_value)
+                await entity_manager.insert(tag)
+
+                mediafile_tag = MediafileTag(mediafile.id, tag.id)
+                await entity_manager.insert(mediafile_tag)
+
+                await entity_manager.commit()
 
         cache_manager = CacheManager(self.cache)
         await cache_manager.set(mediafile)

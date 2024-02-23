@@ -160,14 +160,9 @@ class FileManager:
         filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(file.filename))
         path = os.path.join(dst_dir, filename)
 
-        start_time = time()
-
         async with aiofiles.open(path, "wb") as fn:
             while content := await file.read(AIOFILES_CHUNK_SIZE):
                 await fn.write(content)
-
-        log.debug("Upload file, log_tag=fileio, elapsed_time=%s, path=%s." % (
-            time() - start_time, path))
 
         return filename
 
@@ -175,12 +170,7 @@ class FileManager:
     async def file_delete(path: str) -> None:
         """Delete a file."""
         if await aiofiles.os.path.isfile(path):
-            start_time = time()
-
-            res = await aiofiles.os.unlink(path)
-
-            log.debug("Delete file, log_tag=fileio, elapsed_time=%s, path=%s, res=%s." % (
-                time() - start_time, path, res))
+            await aiofiles.os.unlink(path)
 
     # @staticmethod
     # def file_encrypt(base_path: str, filename: str, encryption_key: bytes) -> str:
