@@ -7,7 +7,7 @@ from app.managers.file_manager import FileManager
 from app.models.user_model import User
 from app.models.album_model import Album
 from app.models.mediafile_model import Mediafile
-from app.models.attribute_model import Attribute
+from app.models.metaparam_model import Metaparam
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper
@@ -63,10 +63,10 @@ class MediafileRepository:
                               thumbnail, mediafile_summary=None)
         await entity_manager.insert(mediafile, commit=True)
 
-        attributes = FileManager.get_attributes(im)
-        for attribute_key in attributes:
-            attribute = Attribute(mediafile.id, attribute_key, str(attributes[attribute_key]))
-            await entity_manager.insert(attribute, commit=True)
+        metaparams = FileManager.get_metaparams(im)
+        for meta_key in metaparams:
+            metaparam = Metaparam(mediafile.id, meta_key, str(metaparams[meta_key]))
+            await entity_manager.insert(metaparam, commit=True)
 
         album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
         album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)

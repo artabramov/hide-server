@@ -43,9 +43,6 @@ class EntityManager:
     @timed
     async def select(self, cls: object, obj_id: int) -> object:
         """Select SQLAlchemy object from Postgres database."""
-        a = 0
-        b = 1 / a
-
         async_result = await self.session.execute(select(cls).where(cls.id == obj_id).limit(1))
         return async_result.unique().scalars().one_or_none()
 

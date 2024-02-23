@@ -97,12 +97,10 @@ class FileManager:
     #     meta.mode = im.mode
     #     return meta
 
-    def get_attributes(im: Image):
-        """Get image attributes."""
-        attributes = im._getexif()
-        if attributes:
-            return {ExifTags.TAGS[k]: v for k, v in im._getexif().items() if k in ExifTags.TAGS}
-        return {}
+    def get_metaparams(im: Image):
+        """Get image metaparams."""
+        metaparams = im._getexif()
+        return {ExifTags.TAGS[k]: v for k, v in im._getexif().items() if k in ExifTags.TAGS} if metaparams else {}
 
     # @staticmethod
     # def file_date(path: str) -> int:

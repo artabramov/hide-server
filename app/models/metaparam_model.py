@@ -10,21 +10,21 @@ from app.config import get_cfg
 cfg = get_cfg()
 
 
-class Attribute(Base):
+class Metaparam(Base):
     """SQLAlchemy model for album."""
 
-    __tablename__ = "attributes"
+    __tablename__ = "metaparams"
 
     id = Column(BigInteger, primary_key=True, index=True)
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
     mediafile_id = Column(BigInteger, ForeignKey('mediafiles.id'), index=True, nullable=False)
-    attribute_key = Column(String(128), nullable=False, index=True)
-    attribute_value = Column(String(512), nullable=True, index=False)
+    meta_key = Column(String(128), nullable=False, index=True)
+    meta_value = Column(String(512), nullable=True, index=False)
 
-    mediafile = relationship("Mediafile", back_populates="attributes", lazy="noload")
+    mediafile = relationship("Mediafile", back_populates="metaparams", lazy="noload")
 
-    def __init__(self, mediafile_id: int, attribute_key: str, attribute_value: str):
+    def __init__(self, mediafile_id: int, meta_key: str, meta_value: str):
         """Init user SQLAlchemy object."""
         self.mediafile_id = mediafile_id
-        self.attribute_key = attribute_key
-        self.attribute_value = attribute_value
+        self.meta_key = meta_key
+        self.meta_value = meta_value

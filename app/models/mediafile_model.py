@@ -36,7 +36,7 @@ class Mediafile(Base):
 
     user = relationship("User", back_populates="mediafile", lazy="joined")
     album = relationship("Album", back_populates="mediafile", lazy="joined")
-    attributes = relationship("Attribute", back_populates="mediafile", lazy="joined", cascade="all,delete")
+    metaparams = relationship("Metaparam", back_populates="mediafile", lazy="joined", cascade="all,delete")
     tags = relationship("Tag", secondary=mediafiles_tags, back_populates="mediafiles", lazy="joined")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, filesize: int, width: int,
@@ -63,5 +63,5 @@ class Mediafile(Base):
             "created_date": self.created_date,
             "updated_date": self.updated_date,
             "original_filename": self.original_filename,
-            "attributes": {x.attribute_key: x.attribute_value for x in self.attributes},
+            "metaparams": {x.meta_key: x.meta_value for x in self.metaparams},
         }
