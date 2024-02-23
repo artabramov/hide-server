@@ -43,14 +43,14 @@ async def add_process_time_header(request: Request, call_next):
     ctx.request_start_time = time.time()
     ctx.trace_request_uuid = str(uuid4())
 
-    log.debug("Request received, log_tag=request, method=%s, url=%s, headers=%s." % (
+    log.debug("Request received, method=%s, url=%s, headers=%s." % (
         request.method, str(request.url), str(request.headers)))
 
     response = await call_next(request)
 
     elapsed_time = time.time() - ctx.request_start_time
-    log.debug("Response sent, log_tag=response, elapsed_time=%s, status=%s, headers=%s." % (
-        elapsed_time, response.status_code, str(response.headers.raw)))
+    log.debug("Response sent, elapsed_time=%s, status=%s, headers=%s." % (
+        "{0:.10f}".format(elapsed_time), response.status_code, str(response.headers.raw)))
 
     return response
 
@@ -58,7 +58,12 @@ async def add_process_time_header(request: Request, call_next):
 @app.exception_handler(Exception)
 async def validation_exception_handler(request: Request, e: Exception):
     """Process validation error."""
-    log.error('Internal server error, log_tag=error, exception=%s.' % str(e))
+    ctx = get_ctx()
+    elapsed_time = time.time() - ctx.request_start_time
+
+    log.error('Request failed, elapsed_time=%s, exception=%s.' % (
+        "{0:.10f}".format(elapsed_time), str(e)))
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=jsonable_encoder({"detail": E.INTERNAL_SERVER_ERROR}),

@@ -7,13 +7,19 @@ filebeat.inputs:
     - /var/log/hide/*.log*
   processors:
     - dissect:
-        tokenizer: "%{} elapsed_time=%{elapsed_time}, %{}"
+        tokenizer: "%{} function=%{function}, %{}"
         field: "message"
         target_prefix: "dissect"
         ignore_failure: true
         trim_values: true
     - dissect:
-        tokenizer: "%{} log_tag=%{log_tag}, %{}"
+        tokenizer: "%{} module=%{module}, %{}"
+        field: "message"
+        target_prefix: "dissect"
+        ignore_failure: true
+        trim_values: true
+    - dissect:
+        tokenizer: "%{} elapsed_time=%{elapsed_time}, %{}"
         field: "message"
         target_prefix: "dissect"
         ignore_failure: true
