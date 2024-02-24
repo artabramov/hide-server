@@ -9,6 +9,7 @@ from app.models.user_model import User
 from app.models.album_model import Album
 from app.models.mediafile_model import Mediafile
 from app.models.metaparam_model import Metaparam
+from app.models.colormap_model import Colormap
 from app.models.tag_model import Tag, MediafileTag
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
@@ -70,7 +71,9 @@ class MediafileRepository:
             metaparam = Metaparam(mediafile.id, meta_key, str(metaparams[meta_key]))
             await entity_manager.insert(metaparam, commit=True)
         
-        mediafile_colormap = ImageManager.get_colormap(im)
+        mediafile_colors = ImageManager.get_colors(im)
+        colormap = Colormap(mediafile.id, **mediafile_colors)
+        await entity_manager.insert(colormap, commit=True)
         pass
 
         album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)

@@ -38,6 +38,7 @@ class Mediafile(Base):
     user = relationship("User", back_populates="mediafile", lazy="joined")
     album = relationship("Album", back_populates="mediafile", lazy="joined")
     metaparams = relationship("Metaparam", back_populates="mediafile", lazy="joined", cascade="all,delete")
+    colormap = relationship("Colormap", back_populates="mediafile", lazy="joined")
     tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, filesize: int, width: int,
