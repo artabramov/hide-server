@@ -37,9 +37,9 @@ class Mediafile(Base):
 
     user = relationship("User", back_populates="mediafile", lazy="joined")
     album = relationship("Album", back_populates="mediafile", lazy="joined")
-    metaparams = relationship("Metaparam", back_populates="mediafile", lazy="joined", cascade="all,delete")
-    mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False)
-    tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
+    mediafile_metadata = relationship("Metadata", back_populates="mediafile", lazy="joined", cascade="all,delete")
+    mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
+    mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, filesize: int, width: int,
                  height: int, mimetype: str,  format: str, mode: str, thumbnail: str, mediafile_summary: str = None):
@@ -65,6 +65,7 @@ class Mediafile(Base):
             "created_date": self.created_date,
             "updated_date": self.updated_date,
             "original_filename": self.original_filename,
-            "metaparams": {x.meta_key: x.meta_value for x in self.metaparams},
+            "mediafile_metadata": {x.meta_key: x.meta_value for x in self.mediafile_metadata},
             "mediafile_colorset": self.mediafile_colorset.to_dict() if self.mediafile_colorset else {},
+            "mediafile_tags": [x.tag_value for x in self.mediafile_tags],
         }

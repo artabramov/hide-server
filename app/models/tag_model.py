@@ -39,7 +39,7 @@ class Tag(Base):
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
     tag_value = Column(String(128), nullable=False, unique=True)
 
-    mediafiles = relationship("Mediafile", secondary=MediafileTag.__table__, back_populates="tags", lazy="noload")
+    mediafiles = relationship("Mediafile", secondary=MediafileTag.__table__, back_populates="mediafile_tags", lazy="noload")
 
     def __init__(self, tag_value: str):
         """Init user SQLAlchemy object."""

@@ -11,6 +11,7 @@ class MediafileUploadSchema(BaseModel):
     """Pydantic schema for userpic uploading request."""
 
     album_id: int
+    mediafile_summary: Optional[str] = None
     file: UploadFile = File(...)
 
 

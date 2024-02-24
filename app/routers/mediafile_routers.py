@@ -19,12 +19,13 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
     album = await album_repository.select(schema.album_id)
 
     mediafile_repository = MediafileRepository(session, cache)
-    mediafile = await mediafile_repository.upload(current_user, album, schema.file)
+    mediafile = await mediafile_repository.upload(current_user, album, schema.file,
+                                                  mediafile_summary=schema.mediafile_summary)
     return {"mediafile_id": mediafile.id}
 
 
 @router.get('/mediafile/{mediafile_id}', tags=['mediafiles'])
-async def select_media(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
+async def select_mediafile(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
                        current_user=Depends(auth_reader)):
     """Select an album."""
     mediafile_repository = MediafileRepository(session, cache)
@@ -33,7 +34,7 @@ async def select_media(mediafile_id: int, session = Depends(get_session), cache 
 
 
 @router.put('/mediafile/{mediafile_id}', tags=['mediafiles'])
-async def update_media(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
+async def update_mediafile(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
                        schema = Depends(MediafileUpdateSchema), current_user=Depends(auth_editor)):
     """Update album."""
     mediafile_repository = MediafileRepository(session, cache)
@@ -47,7 +48,7 @@ async def update_media(mediafile_id: int, session = Depends(get_session), cache 
 
 
 @router.delete('/mediafile/{mediafile_id}', tags=['mediafiles'])
-async def delete_media(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
+async def delete_mediafile(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
                        current_user=Depends(auth_admin)):
     """Delete media."""
     mediafile_repository = MediafileRepository(session, cache)

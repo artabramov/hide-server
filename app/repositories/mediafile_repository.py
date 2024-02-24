@@ -8,7 +8,7 @@ from app.managers.image_manager import ImageManager
 from app.models.user_model import User
 from app.models.album_model import Album
 from app.models.mediafile_model import Mediafile
-from app.models.metaparam_model import Metaparam
+from app.models.metadata_model import Metadata
 from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
 from app.helpers.jwt_helper import JWTHelper
@@ -33,14 +33,13 @@ class MediafileRepository:
         self.session = session
         self.cache = cache
 
-    async def upload(self, user: User, album: Album, file: UploadFile):
+    async def upload(self, user: User, album: Album, file: UploadFile, mediafile_summary=None):
         """Upload userpic."""
         if file.content_type not in cfg.MEDIAFILE_MIMES:
             raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
                                           "type": "file_mime", "msg": E.FILE_MIME_INVALID})
         
         original_filename = file.filename
-        mediafile_summary = None
 
         filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
         mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, filename)
@@ -63,13 +62,13 @@ class MediafileRepository:
         entity_manager = EntityManager(self.session)
 
         mediafile = Mediafile(user.id, album.id, original_filename, filename, filesize, width, height, mimetype, format, mode,
-                              thumbnail, mediafile_summary=None)
+                              thumbnail, mediafile_summary=mediafile_summary)
         await entity_manager.insert(mediafile, commit=True)
 
-        metaparams = FileManager.get_metaparams(im)
-        for meta_key in metaparams:
-            metaparam = Metaparam(mediafile.id, meta_key, str(metaparams[meta_key]))
-            await entity_manager.insert(metaparam, commit=True)
+        metadatas = FileManager.get_metadata(im)
+        for meta_key in metadatas:
+            metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
+            await entity_manager.insert(metadata, commit=True)
         
         mediafile_colors = ImageManager.get_colors(im)
         colorset = Colorset(mediafile.id, **mediafile_colors)
@@ -125,17 +124,17 @@ class MediafileRepository:
         if mediafile_summary:
             tag_values = TagHelper.get_tags(mediafile_summary)
             for tag_value in tag_values:
+                tag = Tag(tag_value)
+                await entity_manager.insert(tag)
+
+                mediafile_tag = MediafileTag(mediafile.id, tag.id)
+                await entity_manager.insert(mediafile_tag)
+
+                await entity_manager.commit()
                 pass
-                # tag = Tag(tag_value)
-                # await entity_manager.insert(tag)
-
-                # mediafile_tag = MediafileTag(mediafile.id, tag.id)
-                # await entity_manager.insert(mediafile_tag)
-
-                # await entity_manager.commit()
 
         cache_manager = CacheManager(self.cache)
-        await cache_manager.set(mediafile)
+        await cache_manager.delete(mediafile)
 
     async def delete(self, mediafile: Mediafile):
         """Delete a media."""
