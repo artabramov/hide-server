@@ -60,7 +60,3 @@ class ImageManager:
         tmp = {color_names[x]:colordict[x] for x in colordict}
         tmp = {x:tmp[x] / (pixels_number / 100) for x in tmp}
         return tmp
-
-        # im_colormap = {x: tmp[x] if x in tmp else 0 for x in color_names}
-        # pass
-

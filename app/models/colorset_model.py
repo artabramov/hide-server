@@ -10,10 +10,10 @@ from app.config import get_cfg
 cfg = get_cfg()
 
 
-class Colormap(Base):
+class Colorset(Base):
     """SQLAlchemy model for album."""
 
-    __tablename__ = "colormaps"
+    __tablename__ = "mediafiles_colorsets"
 
     id = Column(BigInteger, primary_key=True, index=True)
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
@@ -37,7 +37,7 @@ class Colormap(Base):
     silver = Column(Numeric, nullable=False, default=0)
     white = Column(Numeric, nullable=False, default=0)
 
-    mediafile = relationship("Mediafile", back_populates="colormap", lazy="noload")
+    mediafile = relationship("Mediafile", back_populates="mediafile_colorset", lazy="noload")
 
     def __init__(self, mediafile_id: int, maroon: float = 0, red: float = 0, orange: float = 0, yellow: float = 0,
                  olive: float = 0, green: float = 0, lime: float = 0, teal: float = 0, aqua: float = 0, blue: float = 0,
@@ -63,16 +63,28 @@ class Colormap(Base):
         self.silver = silver
         self.white = white
 
-    # def to_dict(self):
-    #     """Return model as dict."""
-    #     return {
-    #         "id": self.id,
-    #         "created_date": self.created_date,
-    #         "updated_date": self.updated_date,
-    #         "user_id": self.user_id,
-    #         "album_name": self.album_name,
-    #         "album_summary": self.album_summary,
-    #         "mediafiles_count": self.mediafiles_count,
-    #         "mediafiles_size": self.mediafiles_size,
-    #         "user": self.user.to_dict(),
-    #     }
+    def to_dict(self):
+        """Return model as dict."""
+        return {
+            "id": self.id,
+            "created_date": self.created_date,
+            "updated_date": self.updated_date,
+            "mediafile_id": self.mediafile_id,
+            "maroon": self.maroon,
+            "red": self.red,
+            "orange": self.orange,
+            "yellow": self.yellow,
+            "olive": self.olive,
+            "green": self.green,
+            "lime": self.lime,
+            "teal": self.teal,
+            "aqua": self.aqua,
+            "blue": self.blue,
+            "navy": self.navy,
+            "fuchsia": self.fuchsia,
+            "purple": self.purple,
+            "black": self.black,
+            "gray": self.gray,
+            "silver": self.silver,
+            "white": self.white,
+        }
