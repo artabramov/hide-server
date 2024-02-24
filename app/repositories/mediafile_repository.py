@@ -4,6 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from app.managers.entity_manager import EntityManager
 from app.managers.cache_manager import CacheManager
 from app.managers.file_manager import FileManager
+from app.managers.image_manager import ImageManager
 from app.models.user_model import User
 from app.models.album_model import Album
 from app.models.mediafile_model import Mediafile
@@ -68,6 +69,9 @@ class MediafileRepository:
         for meta_key in metaparams:
             metaparam = Metaparam(mediafile.id, meta_key, str(metaparams[meta_key]))
             await entity_manager.insert(metaparam, commit=True)
+        
+        mediafile_colormap = ImageManager.get_colormap(im)
+        pass
 
         album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
         album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
@@ -118,13 +122,14 @@ class MediafileRepository:
         if mediafile_summary:
             tag_values = TagHelper.get_tags(mediafile_summary)
             for tag_value in tag_values:
-                tag = Tag(tag_value)
-                await entity_manager.insert(tag)
+                pass
+                # tag = Tag(tag_value)
+                # await entity_manager.insert(tag)
 
-                mediafile_tag = MediafileTag(mediafile.id, tag.id)
-                await entity_manager.insert(mediafile_tag)
+                # mediafile_tag = MediafileTag(mediafile.id, tag.id)
+                # await entity_manager.insert(mediafile_tag)
 
-                await entity_manager.commit()
+                # await entity_manager.commit()
 
         cache_manager = CacheManager(self.cache)
         await cache_manager.set(mediafile)
