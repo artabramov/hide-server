@@ -48,7 +48,8 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
                               mediafile_description=schema.mediafile_description)
         
         mediafile_repository = MediafileRepository(session, cache)
-        await mediafile_repository.upload(mediafile, im)
+        await mediafile_repository.lock_all()
+        await mediafile_repository.insert(mediafile, im)
 
     except Exception as e:
         if mediafile_path:

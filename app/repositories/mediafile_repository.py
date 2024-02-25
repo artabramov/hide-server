@@ -31,19 +31,22 @@ cfg = get_cfg()
 class MediafileRepository(BaseRepository):
     """Mediafile repository."""
 
-    async def upload(self, mediafile: Mediafile, im: Image, commit: bool=False) -> Mediafile:
+    async def insert(self, mediafile: Mediafile, im: Image, commit: bool=False) -> Mediafile:
         """Insert mediafile."""
         await self.entity_manager.insert(mediafile)
 
+        # colorset
         mediafile_colors = ImageManager.get_colors(im)
         colorset = Colorset(mediafile.id, **mediafile_colors)
         await self.entity_manager.insert(colorset)
 
+        # metadata
         metadatas = FileManager.get_metadata(im)
         for meta_key in metadatas:
             metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
             await self.entity_manager.insert(metadata)
 
+        # tags
         if mediafile.mediafile_description:
             tag_values = TagHelper.get_tags(mediafile.mediafile_description)
             for tag_value in tag_values:
@@ -82,8 +85,17 @@ class MediafileRepository(BaseRepository):
         await self.cache_manager.delete(mediafile)
         return mediafile
 
+    async def count_all(self, **kwargs) -> int:
+        """Count mediafiles."""
+        return await self.entity_manager.count_all(Mediafile, **kwargs)
 
+    async def sum_all(self, column: str, **kwargs) -> int:
+        """Sum mediafiles column."""
+        return await self.entity_manager.sum_all(Mediafile, column, **kwargs)
 
+    async def lock_all(self) -> None:
+        """Lock mediafiles."""
+        return await self.entity_manager.lock_all(Mediafile)
 
 
 
@@ -157,9 +169,4 @@ class MediafileRepository(BaseRepository):
     #         await cache_manager.set(mediafile)
     #     return mediafiles
 
-    async def count_all(self, **kwargs) -> int:
-        """Count mediafiles."""
-        return await self.entity_manager.count_all(Mediafile, **kwargs)
 
-    async def sum_all(self, column: str, **kwargs) -> int:
-        return await self.entity_manager.sum_all(Mediafile, column, **kwargs)
