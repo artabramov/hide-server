@@ -32,18 +32,20 @@ class Mediafile(Base):
     format = Column(String(40), nullable=False, index=True)
     mode = Column(String(40), nullable=False, index=True)
     thumbnail = Column(String(512), nullable=True, unique=True)
-    mediafile_summary = Column(String(512), index=False, nullable=True)
+    mediafile_description = Column(String(512), index=False, nullable=True)
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
     user = relationship("User", back_populates="mediafile", lazy="joined")
     album = relationship("Album", back_populates="mediafile", lazy="joined")
-    favorite = relationship("Favorite", back_populates="favorite_mediafile", lazy="noload")
     mediafile_metadata = relationship("Metadata", back_populates="mediafile", lazy="joined", cascade="all,delete")
     mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
     mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
 
+    favorite = relationship("Favorite", back_populates="favorite_mediafile", lazy="noload")
+    comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload")
+
     def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, filesize: int, width: int,
-                 height: int, mimetype: str,  format: str, mode: str, thumbnail: str, mediafile_summary: str = None):
+                 height: int, mimetype: str,  format: str, mode: str, thumbnail: str, mediafile_description: str = None):
         """Init user SQLAlchemy object."""
         self.user_id = user_id
         self.album_id = album_id
@@ -56,7 +58,7 @@ class Mediafile(Base):
         self.format = format
         self.mode = mode
         self.thumbnail = thumbnail
-        self.mediafile_summary = mediafile_summary
+        self.mediafile_description = mediafile_description
         self.comments_count = 0
 
     def to_dict(self):

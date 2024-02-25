@@ -12,6 +12,7 @@ from app.models.metadata_model import Metadata
 from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
 from app.models.favorite_model import Favorite
+from app.models.comment_model import Comment
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper
@@ -34,7 +35,7 @@ class MediafileRepository:
         self.session = session
         self.cache = cache
 
-    async def upload(self, user: User, album: Album, file: UploadFile, mediafile_summary=None):
+    async def upload(self, user: User, album: Album, file: UploadFile, mediafile_description=None):
         """Upload userpic."""
         if file.content_type not in cfg.MEDIAFILE_MIMES:
             raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
@@ -63,7 +64,7 @@ class MediafileRepository:
         entity_manager = EntityManager(self.session)
 
         mediafile = Mediafile(user.id, album.id, original_filename, filename, filesize, width, height, mimetype, format, mode,
-                              thumbnail, mediafile_summary=mediafile_summary)
+                              thumbnail, mediafile_description=mediafile_description)
         await entity_manager.insert(mediafile, commit=True)
 
         metadatas = FileManager.get_metadata(im)
@@ -97,13 +98,13 @@ class MediafileRepository:
         await cache_manager.set(mediafile)
         return mediafile
 
-    async def update(self, mediafile: Mediafile, album: Album, original_filename: str, mediafile_summary: str = None):
+    async def update(self, mediafile: Mediafile, album: Album, original_filename: str, mediafile_description: str = None):
         """Update album."""
         outdated_album_id = mediafile.album_id if mediafile.album_id != album.id else None
 
         mediafile.album_id = album.id
         mediafile.original_filename = original_filename
-        mediafile.mediafile_summary = mediafile_summary
+        mediafile.mediafile_description = mediafile_description
         
         entity_manager = EntityManager(self.session)
         await entity_manager.update(mediafile)
@@ -122,8 +123,8 @@ class MediafileRepository:
         await entity_manager.commit()
 
         # tags
-        if mediafile_summary:
-            tag_values = TagHelper.get_tags(mediafile_summary)
+        if mediafile_description:
+            tag_values = TagHelper.get_tags(mediafile_description)
             for tag_value in tag_values:
                 tag = Tag(tag_value)
                 await entity_manager.insert(tag)

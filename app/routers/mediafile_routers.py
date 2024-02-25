@@ -20,7 +20,7 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
 
     mediafile_repository = MediafileRepository(session, cache)
     mediafile = await mediafile_repository.upload(current_user, album, schema.file,
-                                                  mediafile_summary=schema.mediafile_summary)
+                                                  mediafile_description=schema.mediafile_description)
     return {"mediafile_id": mediafile.id}
 
 
@@ -43,7 +43,7 @@ async def update_mediafile(mediafile_id: int, session = Depends(get_session), ca
     album_repository = AlbumRepository(session, cache)
     album = await album_repository.select(schema.album_id)
 
-    await mediafile_repository.update(mediafile, album, schema.original_filename, mediafile_summary=schema.mediafile_summary)
+    await mediafile_repository.update(mediafile, album, schema.original_filename, mediafile_description=schema.mediafile_description)
     return {}
 
 
