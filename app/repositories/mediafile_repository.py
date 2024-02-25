@@ -77,11 +77,7 @@ class MediafileRepository(BaseRepository):
 
     async def update(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
         """Update mediafile."""
-        await self.entity_manager.update(mediafile)
-
-        if commit:
-            await self.entity_manager.commit()
-
+        await self.entity_manager.update(mediafile, commit=commit)
         await self.cache_manager.delete(mediafile)
         return mediafile
 

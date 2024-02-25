@@ -33,7 +33,6 @@ async def insert_comment(session=Depends(get_session), cache=Depends(get_cache),
     mediafile.comments_count = await comment_repository.count_all(mediafile_id__eq=mediafile.id)
     await mediafile_repository.update(mediafile)
 
-    await comment_repository.commit()
     return {
         "comment_id": comment.id,
     }
@@ -67,7 +66,6 @@ async def update_comment(session=Depends(get_session), cache=Depends(get_cache),
     comment.comment_content = schema.comment_content
     await comment_repository.update(comment)
 
-    await comment_repository.commit()
     return {}
 
 
@@ -92,7 +90,6 @@ async def delete_comment(session=Depends(get_session), cache=Depends(get_cache),
     mediafile.comments_count = await comment_repository.count_all(mediafile_id__eq=mediafile.id)
     await mediafile_repository.update(mediafile)
 
-    await comment_repository.commit()
     return {}
 
 

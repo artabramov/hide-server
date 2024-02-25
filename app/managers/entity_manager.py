@@ -118,12 +118,10 @@ class EntityManager:
 
     #     return res
 
-    @timed
     async def commit(self) -> None:
         """Commit transaction."""
         return await self.session.commit()
 
-    @timed
     async def rollback(self) -> None:
         """Rollback transaction."""
         return await self.session.rollback()

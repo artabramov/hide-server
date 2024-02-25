@@ -22,4 +22,5 @@ async def get_session():
         session = async_session()
         yield session
     finally:
+        await session.commit()
         await session.close()

@@ -64,7 +64,6 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
     album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
     await mediafile_repository.update(album)
 
-    await mediafile_repository.commit()
     return {
         "mediafile_id": mediafile.id,
     }
@@ -112,7 +111,6 @@ async def update_mediafile(mediafile_id: int, session = Depends(get_session), ca
         album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
         await mediafile_repository.update(album)
     
-    await mediafile_repository.commit()
     return {}
 
 
