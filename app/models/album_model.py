@@ -25,7 +25,7 @@ class Album(Base):
     mediafiles_size = Column(BigInteger, index=True, nullable=False, default=0)
 
     user = relationship("User", back_populates="album", lazy="joined")
-    mediafile = relationship("Mediafile", back_populates="album", lazy="noload")
+    mediafile = relationship("Mediafile", back_populates="mediafile_album", lazy="noload")
 
     def __init__(self, user_id: int, album_name: str, album_summary: str = None):
         """Init user SQLAlchemy object."""

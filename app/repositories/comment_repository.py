@@ -1,18 +1,11 @@
 """Comment repository."""
 
+from app.repositories.base_repository import BaseRepository
 from app.models.comment_model import Comment
-from app.models.comment_model import Comment
-from app.managers.entity_manager import EntityManager
-from app.managers.cache_manager import CacheManager
 
 
-class CommentRepository:
+class CommentRepository(BaseRepository):
     """Comment repository."""
-
-    def __init__(self, session, cache) -> None:
-        """Init Comment repository."""
-        self.entity_manager = EntityManager(session)
-        self.cache_manager = CacheManager(cache)
 
     async def insert(self, comment: Comment, commit: bool=False) -> Comment:
         """Insert comment."""

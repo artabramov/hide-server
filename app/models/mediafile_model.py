@@ -1,19 +1,15 @@
-"""User and related SQLAlchemy models."""
+"""Mediafile SQLAlchemy model."""
 
 import enum
 from time import time
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.session import Base
-from app.config import get_cfg
-# from app.models.tag_model import mediafiles_tags
 from app.models.tag_model import MediafileTag
-
-cfg = get_cfg()
 
 
 class Mediafile(Base):
-    """SQLAlchemy model for album."""
+    """Mediafile SQLAlchemy model."""
 
     __tablename__ = "mediafiles"
 
@@ -35,8 +31,8 @@ class Mediafile(Base):
     mediafile_description = Column(String(512), index=False, nullable=True)
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
-    user = relationship("User", back_populates="mediafile", lazy="joined")
-    album = relationship("Album", back_populates="mediafile", lazy="joined")
+    mediafile_user = relationship("User", back_populates="mediafile", lazy="joined")
+    mediafile_album = relationship("Album", back_populates="mediafile", lazy="joined")
     mediafile_metadata = relationship("Metadata", back_populates="mediafile", lazy="joined", cascade="all,delete")
     mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
     mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
@@ -46,7 +42,7 @@ class Mediafile(Base):
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, filesize: int, width: int,
                  height: int, mimetype: str,  format: str, mode: str, thumbnail: str, mediafile_description: str = None):
-        """Init user SQLAlchemy object."""
+        """Init Mediafile model."""
         self.user_id = user_id
         self.album_id = album_id
         self.original_filename = original_filename
@@ -62,12 +58,24 @@ class Mediafile(Base):
         self.comments_count = 0
 
     def to_dict(self):
-        """Return model as dict."""
+        """Return Mediafile model as dictionary."""
         return {
             "id": self.id,
             "created_date": self.created_date,
             "updated_date": self.updated_date,
+            "user_id": self.user_id,
+            "album_id": self.album_id,
             "original_filename": self.original_filename,
+            "filename": self.filename,
+            "filesize": self.filesize,
+            "width": self.width,
+            "height": self.height,
+            "mimetype": self.mimetype,
+            "format": self.format,
+            "mode": self.mode,
+            "thumbnail": self.thumbnail,
+            "mediafile_description": self.mediafile_description,
+            "comments_count": self.comments_count,
             "mediafile_metadata": {x.meta_key: x.meta_value for x in self.mediafile_metadata},
             "mediafile_colorset": self.mediafile_colorset.to_dict() if self.mediafile_colorset else {},
             "mediafile_tags": [x.tag_value for x in self.mediafile_tags],

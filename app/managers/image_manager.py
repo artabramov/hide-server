@@ -1,6 +1,8 @@
 from functools import lru_cache, reduce
 from PIL import Image, ImageOps
+from app.config import get_cfg
 
+cfg = get_cfg()
 
 PRIMARY_COLORS = {
     "maroon": (128, 0, 0),
@@ -24,6 +26,19 @@ PRIMARY_COLORS = {
 
 
 class ImageManager:
+
+    @staticmethod
+    def open_image(image_path: str) -> Image:
+        """Open image."""
+        return Image.open(image_path)
+
+    @staticmethod
+    def create_thumbnail(image_path: str) -> Image:
+        """Create thumbnail."""
+        im = Image.open(image_path)
+        im.thumbnail(tuple([cfg.THUMBNAIL_WIDTH, cfg.THUMBNAIL_HEIGHT]))
+        im.save(image_path, image_quality=cfg.THUMBNAIL_QUALITY)
+        return im
 
     @lru_cache
     @staticmethod

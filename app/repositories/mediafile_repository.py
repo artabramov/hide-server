@@ -19,6 +19,7 @@ from app.helpers.hash_helper import HashHelper
 from app.helpers.tag_helper import TagHelper
 from fastapi import HTTPException, UploadFile
 from PIL import Image, ImageOps
+from app.repositories.base_repository import BaseRepository
 from app.errors import E
 from app.config import get_cfg
 import time
@@ -27,61 +28,37 @@ import os
 cfg = get_cfg()
 
 
-class MediafileRepository:
-    """User repository."""
+class MediafileRepository(BaseRepository):
+    """Mediafile repository."""
 
-    def __init__(self, session, cache) -> None:
-        """Init User Repository."""
-        self.entity_manager = EntityManager(session)
-        self.cache_manager = CacheManager(cache)
+    async def upload(self, mediafile: Mediafile, im: Image, commit: bool=False) -> Mediafile:
+        """Insert mediafile."""
+        await self.entity_manager.insert(mediafile)
 
-    # async def upload(self, user: User, album: Album, file: UploadFile, mediafile_description=None):
-    #     """Upload userpic."""
-    #     if file.content_type not in cfg.MEDIAFILE_MIMES:
-    #         raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
-    #                                       "type": "file_mime", "msg": E.FILE_MIME_INVALID})
-        
-    #     original_filename = file.filename
+        mediafile_colors = ImageManager.get_colors(im)
+        colorset = Colorset(mediafile.id, **mediafile_colors)
+        await self.entity_manager.insert(colorset)
 
-    #     filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
-    #     mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, filename)
-    #     mimetype = FileManager.get_mimetype(mediafile_path)
-    #     filesize = FileManager.get_filesize(mediafile_path)
+        metadatas = FileManager.get_metadata(im)
+        for meta_key in metadatas:
+            metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
+            await self.entity_manager.insert(metadata)
 
-    #     im = Image.open(mediafile_path)
-    #     width = im.width
-    #     height = im.height
-    #     format = im.format
-    #     mode = im.mode
+        if mediafile.mediafile_description:
+            tag_values = TagHelper.get_tags(mediafile.mediafile_description)
+            for tag_value in tag_values:
+                tag = await self.entity_manager.select_by(Tag, tag_value__eq=tag_value)
+                if not tag:
+                    tag = Tag(tag_value)
+                    await self.entity_manager.insert(tag)
 
-    #     thumbnail = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
-    #     thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail)
+                mediafile_tag = MediafileTag(mediafile.id, tag.id)
+                await self.entity_manager.insert(mediafile_tag)
 
-    #     thumbnail_image = Image.open(thumbnail_path)
-    #     thumbnail_image.thumbnail(tuple([cfg.THUMBNAIL_WIDTH, cfg.THUMBNAIL_HEIGHT]))
-    #     thumbnail_image.save(thumbnail_path, image_quality=cfg.THUMBNAIL_QUALITY)
+        if commit:
+            await self.entity_manager.commit()
 
-    #     entity_manager = EntityManager(self.session)
-
-    #     mediafile = Mediafile(user.id, album.id, original_filename, filename, filesize, width, height, mimetype, format, mode,
-    #                           thumbnail, mediafile_description=mediafile_description)
-    #     await entity_manager.insert(mediafile, commit=True)
-
-    #     metadatas = FileManager.get_metadata(im)
-    #     for meta_key in metadatas:
-    #         metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
-    #         await entity_manager.insert(metadata, commit=True)
-        
-    #     mediafile_colors = ImageManager.get_colors(im)
-    #     colorset = Colorset(mediafile.id, **mediafile_colors)
-    #     await entity_manager.insert(colorset, commit=True)
-    #     pass
-
-    #     album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
-    #     album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
-    #     await entity_manager.update(album, commit=True)
-
-    #     return mediafile
+        return mediafile
 
     async def select(self, mediafile_id: int) -> Mediafile:
         """Select mediafile."""
@@ -180,8 +157,9 @@ class MediafileRepository:
     #         await cache_manager.set(mediafile)
     #     return mediafiles
 
-    # async def count_all(self, **kwargs):
-    #     """Count users."""
-    #     entity_manager = EntityManager(self.session)
-    #     mediafiles_count = await entity_manager.count_all(Mediafile, **kwargs)
-    #     return mediafiles_count
+    async def count_all(self, **kwargs) -> int:
+        """Count mediafiles."""
+        return await self.entity_manager.count_all(Mediafile, **kwargs)
+
+    async def sum_all(self, column: str, **kwargs) -> int:
+        return await self.entity_manager.sum_all(Mediafile, column, **kwargs)

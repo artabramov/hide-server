@@ -46,7 +46,7 @@ class User(Base, FernetMixin):
     user_summary = Column(String(512), index=False, nullable=True)
 
     album = relationship("Album", back_populates="user", lazy="noload")
-    mediafile = relationship("Mediafile", back_populates="user", lazy="noload")
+    mediafile = relationship("Mediafile", back_populates="mediafile_user", lazy="noload")
     favorite = relationship("Favorite", back_populates="favorite_user", lazy="noload")
     comment = relationship("Comment", back_populates="comment_user", lazy="noload")
 
