@@ -62,8 +62,9 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
 
     album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=album.id)
     album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
-    await mediafile_repository.update(album, commit=True)
+    await mediafile_repository.update(album)
 
+    await mediafile_repository.commit()
     return {
         "mediafile_id": mediafile.id,
     }
@@ -88,19 +89,42 @@ async def update_mediafile(mediafile_id: int, session = Depends(get_session), ca
     except ValueError:
         raise HTTPException(status_code=404)
 
-    album_repository = AlbumRepository(session, cache)
-    album = await album_repository.select(schema.album_id)
+    try:
+        album_repository = AlbumRepository(session, cache)
+        album = await album_repository.select(schema.album_id)
+    except ValueError:
+        raise RequestValidationError({"loc": ["query", "album_id"], "input": schema.album_id,
+                                      "type": "value_invalid", "msg": E.VALUE_INVALID})
+    
+    mediafile.album_id = album.id
+    mediafile.original_filename = schema.original_filename
+    mediafile.mediafile_description = schema.mediafile_description
 
-    await mediafile_repository.update(mediafile, album, schema.original_filename, mediafile_description=schema.mediafile_description)
+    await mediafile_repository.lock_all()
+    await mediafile_repository.update(mediafile)
+
+    if mediafile.mediafile_album.id != album.id:
+        mediafile.mediafile_album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=mediafile.mediafile_album.id)
+        mediafile.mediafile_album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=mediafile.mediafile_album.id)
+        await mediafile_repository.update(mediafile.mediafile_album)
+
+        album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=album.id)
+        album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
+        await mediafile_repository.update(album)
+    
+    await mediafile_repository.commit()
     return {}
 
 
 @router.delete('/mediafile/{mediafile_id}', tags=['mediafiles'])
-async def delete_mediafile(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
-                       current_user=Depends(auth_admin)):
-    """Delete media."""
-    mediafile_repository = MediafileRepository(session, cache)
-    mediafile = await mediafile_repository.select(mediafile_id)
+async def delete_mediafile(mediafile_id: int, session=Depends(get_session), cache=Depends(get_cache),
+                           current_user=Depends(auth_admin)):
+    """Delete mediafile."""
+    try:
+        mediafile_repository = MediafileRepository(session, cache)
+        mediafile = await mediafile_repository.select(mediafile_id)
+    except ValueError:
+        raise HTTPException(status_code=404)
 
     await mediafile_repository.delete(mediafile)
     return {}

@@ -11,3 +11,9 @@ class BaseRepository:
         """Init repository."""
         self.entity_manager = EntityManager(session)
         self.cache_manager = CacheManager(cache)
+
+    async def commit(self):
+        await self.entity_manager.commit()
+
+    async def rollback(self):
+        await self.entity_manager.rollback()
