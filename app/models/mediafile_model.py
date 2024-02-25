@@ -37,6 +37,7 @@ class Mediafile(Base):
 
     user = relationship("User", back_populates="mediafile", lazy="joined")
     album = relationship("Album", back_populates="mediafile", lazy="joined")
+    favorite = relationship("Favorite", back_populates="favorite_mediafile", lazy="noload")
     mediafile_metadata = relationship("Metadata", back_populates="mediafile", lazy="joined", cascade="all,delete")
     mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
     mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")

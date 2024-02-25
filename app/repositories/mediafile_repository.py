@@ -11,6 +11,7 @@ from app.models.mediafile_model import Mediafile
 from app.models.metadata_model import Metadata
 from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
+from app.models.favorite_model import Favorite
 from app.helpers.jwt_helper import JWTHelper
 from app.helpers.mfa_helper import MFAHelper
 from app.helpers.hash_helper import HashHelper
