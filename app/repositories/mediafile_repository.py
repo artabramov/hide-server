@@ -32,140 +32,156 @@ class MediafileRepository:
 
     def __init__(self, session, cache) -> None:
         """Init User Repository."""
-        self.session = session
-        self.cache = cache
+        self.entity_manager = EntityManager(session)
+        self.cache_manager = CacheManager(cache)
 
-    async def upload(self, user: User, album: Album, file: UploadFile, mediafile_description=None):
-        """Upload userpic."""
-        if file.content_type not in cfg.MEDIAFILE_MIMES:
-            raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
-                                          "type": "file_mime", "msg": E.FILE_MIME_INVALID})
+    # async def upload(self, user: User, album: Album, file: UploadFile, mediafile_description=None):
+    #     """Upload userpic."""
+    #     if file.content_type not in cfg.MEDIAFILE_MIMES:
+    #         raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
+    #                                       "type": "file_mime", "msg": E.FILE_MIME_INVALID})
         
-        original_filename = file.filename
+    #     original_filename = file.filename
 
-        filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
-        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, filename)
-        mimetype = FileManager.get_mimetype(mediafile_path)
-        filesize = FileManager.get_filesize(mediafile_path)
+    #     filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
+    #     mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, filename)
+    #     mimetype = FileManager.get_mimetype(mediafile_path)
+    #     filesize = FileManager.get_filesize(mediafile_path)
 
-        im = Image.open(mediafile_path)
-        width = im.width
-        height = im.height
-        format = im.format
-        mode = im.mode
+    #     im = Image.open(mediafile_path)
+    #     width = im.width
+    #     height = im.height
+    #     format = im.format
+    #     mode = im.mode
 
-        thumbnail = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
-        thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail)
+    #     thumbnail = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
+    #     thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail)
 
-        thumbnail_image = Image.open(thumbnail_path)
-        thumbnail_image.thumbnail(tuple([cfg.THUMBNAIL_WIDTH, cfg.THUMBNAIL_HEIGHT]))
-        thumbnail_image.save(thumbnail_path, image_quality=cfg.THUMBNAIL_QUALITY)
+    #     thumbnail_image = Image.open(thumbnail_path)
+    #     thumbnail_image.thumbnail(tuple([cfg.THUMBNAIL_WIDTH, cfg.THUMBNAIL_HEIGHT]))
+    #     thumbnail_image.save(thumbnail_path, image_quality=cfg.THUMBNAIL_QUALITY)
 
-        entity_manager = EntityManager(self.session)
+    #     entity_manager = EntityManager(self.session)
 
-        mediafile = Mediafile(user.id, album.id, original_filename, filename, filesize, width, height, mimetype, format, mode,
-                              thumbnail, mediafile_description=mediafile_description)
-        await entity_manager.insert(mediafile, commit=True)
+    #     mediafile = Mediafile(user.id, album.id, original_filename, filename, filesize, width, height, mimetype, format, mode,
+    #                           thumbnail, mediafile_description=mediafile_description)
+    #     await entity_manager.insert(mediafile, commit=True)
 
-        metadatas = FileManager.get_metadata(im)
-        for meta_key in metadatas:
-            metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
-            await entity_manager.insert(metadata, commit=True)
+    #     metadatas = FileManager.get_metadata(im)
+    #     for meta_key in metadatas:
+    #         metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
+    #         await entity_manager.insert(metadata, commit=True)
         
-        mediafile_colors = ImageManager.get_colors(im)
-        colorset = Colorset(mediafile.id, **mediafile_colors)
-        await entity_manager.insert(colorset, commit=True)
-        pass
+    #     mediafile_colors = ImageManager.get_colors(im)
+    #     colorset = Colorset(mediafile.id, **mediafile_colors)
+    #     await entity_manager.insert(colorset, commit=True)
+    #     pass
 
-        album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
-        album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
-        await entity_manager.update(album, commit=True)
+    #     album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
+    #     album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
+    #     await entity_manager.update(album, commit=True)
 
-        return mediafile
+    #     return mediafile
 
-    async def select(self, mediafile_id: int):
-        """Select user."""
-        cache_manager = CacheManager(self.cache)
-        mediafile = await cache_manager.get(Mediafile, mediafile_id)
+    async def select(self, mediafile_id: int) -> Mediafile:
+        """Select mediafile."""
+        mediafile = await self.cache_manager.get(Mediafile, mediafile_id)
+        if not mediafile:
+            mediafile = await self.entity_manager.select(Mediafile, mediafile_id)
 
         if not mediafile:
-            entity_manager = EntityManager(self.session)
-            mediafile = await entity_manager.select(Mediafile, mediafile_id)
+            raise ValueError
 
-        if not mediafile:
-            raise HTTPException(status_code=404)
-
-        await cache_manager.set(mediafile)
+        await self.cache_manager.set(mediafile)
         return mediafile
 
-    async def update(self, mediafile: Mediafile, album: Album, original_filename: str, mediafile_description: str = None):
-        """Update album."""
-        outdated_album_id = mediafile.album_id if mediafile.album_id != album.id else None
+    async def update(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
+        """Update mediafile."""
+        await self.entity_manager.update(mediafile)
 
-        mediafile.album_id = album.id
-        mediafile.original_filename = original_filename
-        mediafile.mediafile_description = mediafile_description
+        if commit:
+            await self.entity_manager.commit()
+
+        await self.cache_manager.delete(mediafile)
+        return mediafile
+
+
+
+
+
+
+
+
+    # async def update(self, mediafile: Mediafile, album: Album, original_filename: str, mediafile_description: str=None,
+    #                  commit: bool=False):
+    #     """Update album."""
+    #     outdated_album_id = mediafile.album_id if mediafile.album_id != album.id else None
+
+    #     mediafile.album_id = album.id
+    #     mediafile.original_filename = original_filename
+    #     mediafile.mediafile_description = mediafile_description
         
-        entity_manager = EntityManager(self.session)
-        await entity_manager.update(mediafile)
+    #     entity_manager = EntityManager(self.session)
+    #     await entity_manager.update(mediafile)
 
-        if outdated_album_id:
-            outdated_album = await entity_manager.select(Album, outdated_album_id)
-            outdated_album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=outdated_album_id)
-            outdated_album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=outdated_album_id)
-            await entity_manager.update(outdated_album)
+    #     if outdated_album_id:
+    #         outdated_album = await entity_manager.select(Album, outdated_album_id)
+    #         outdated_album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=outdated_album_id)
+    #         outdated_album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=outdated_album_id)
+    #         await entity_manager.update(outdated_album)
 
-            album = await entity_manager.select(Album, album.id)
-            album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
-            album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
-            await entity_manager.update(album)
+    #         album = await entity_manager.select(Album, album.id)
+    #         album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
+    #         album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
+    #         await entity_manager.update(album)
 
-        await entity_manager.commit()
+    #     # tags
+    #     # if mediafile_description:
+    #     #     tag_values = TagHelper.get_tags(mediafile_description)
+    #     #     for tag_value in tag_values:
+    #     #         tag = Tag(tag_value)
+    #     #         await entity_manager.insert(tag)
 
-        # tags
-        if mediafile_description:
-            tag_values = TagHelper.get_tags(mediafile_description)
-            for tag_value in tag_values:
-                tag = Tag(tag_value)
-                await entity_manager.insert(tag)
+    #     #         mediafile_tag = MediafileTag(mediafile.id, tag.id)
+    #     #         await entity_manager.insert(mediafile_tag)
 
-                mediafile_tag = MediafileTag(mediafile.id, tag.id)
-                await entity_manager.insert(mediafile_tag)
+    #     #         await entity_manager.commit()
+    #     #         pass
 
-                await entity_manager.commit()
-                pass
+    #     if commit:
+    #         await entity_manager.commit()
 
-        cache_manager = CacheManager(self.cache)
-        await cache_manager.delete(mediafile)
+    #     cache_manager = CacheManager(self.cache)
+    #     await cache_manager.delete(mediafile)
 
-    async def delete(self, mediafile: Mediafile):
-        """Delete a media."""
-        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile.filename)
-        FileManager.file_delete(mediafile_path)
+    # async def delete(self, mediafile: Mediafile):
+    #     """Delete a media."""
+    #     mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile.filename)
+    #     FileManager.file_delete(mediafile_path)
 
-        entity_manager = EntityManager(self.session)
-        await entity_manager.delete(mediafile, commit=True)
+    #     entity_manager = EntityManager(self.session)
+    #     await entity_manager.delete(mediafile, commit=True)
 
-        album = await entity_manager.select(Album, mediafile.album_id)
-        album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
-        album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
-        await entity_manager.update(album, commit=True)
+    #     album = await entity_manager.select(Album, mediafile.album_id)
+    #     album.mediafiles_size = await entity_manager.sum_all(Mediafile, "filesize", album_id__eq=album.id)
+    #     album.mediafiles_count = await entity_manager.count_all(Mediafile, album_id__eq=album.id)
+    #     await entity_manager.update(album, commit=True)
 
-        cache_manager = CacheManager(self.cache)
-        await cache_manager.delete(mediafile)
+    #     cache_manager = CacheManager(self.cache)
+    #     await cache_manager.delete(mediafile)
 
-    async def select_all(self, **kwargs):
-        """Select all users."""
-        entity_manager = EntityManager(self.session)
-        mediafiles = await entity_manager.select_all(Mediafile, **kwargs)
+    # async def select_all(self, **kwargs):
+    #     """Select all users."""
+    #     entity_manager = EntityManager(self.session)
+    #     mediafiles = await entity_manager.select_all(Mediafile, **kwargs)
 
-        cache_manager = CacheManager(self.cache)
-        for mediafile in mediafiles:
-            await cache_manager.set(mediafile)
-        return mediafiles
+    #     cache_manager = CacheManager(self.cache)
+    #     for mediafile in mediafiles:
+    #         await cache_manager.set(mediafile)
+    #     return mediafiles
 
-    async def count_all(self, **kwargs):
-        """Count users."""
-        entity_manager = EntityManager(self.session)
-        mediafiles_count = await entity_manager.count_all(Mediafile, **kwargs)
-        return mediafiles_count
+    # async def count_all(self, **kwargs):
+    #     """Count users."""
+    #     entity_manager = EntityManager(self.session)
+    #     mediafiles_count = await entity_manager.count_all(Mediafile, **kwargs)
+    #     return mediafiles_count

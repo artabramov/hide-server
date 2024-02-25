@@ -1,17 +1,13 @@
-"""The Comment SQLAlchemy model."""
+"""Comment SQLAlchemy model."""
 
-import enum
-from time import time
-from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, Text
+from sqlalchemy import Column, Integer, BigInteger, ForeignKey, Text
 from sqlalchemy.orm import relationship
+from time import time
 from app.session import Base
-from app.config import get_cfg
-
-cfg = get_cfg()
 
 
 class Comment(Base):
-    """The Comment SQLAlchemy model."""
+    """Comment SQLAlchemy model."""
 
     __tablename__ = "comments"
 
@@ -26,7 +22,19 @@ class Comment(Base):
     comment_mediafile = relationship("Mediafile", back_populates="comment", lazy="noload")
 
     def __init__(self, user_id: int, mediafile_id: int, comment_content: str):
-        """Init user SQLAlchemy object."""
+        """Init Comment model."""
         self.user_id = user_id
         self.mediafile_id = mediafile_id
         self.comment_content = comment_content
+
+    def to_dict(self):
+        """Return Comment model as dictionary."""
+        return {
+            "id": self.id,
+            "created_date": self.created_date,
+            "updated_date": self.updated_date,
+            "user_id": self.user_id,
+            "mediafile_id": self.mediafile_id,
+            "comment_content": self.comment_content,
+            "comment_user": self.comment_user.to_dict(),
+        }
