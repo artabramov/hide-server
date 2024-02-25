@@ -45,3 +45,7 @@ class CommentRepository(BaseRepository):
     async def count_all(self, **kwargs) -> int:
         """Count comments."""
         return await self.entity_manager.count_all(Comment, **kwargs)
+
+    async def lock_all(self) -> None:
+        """Lock comments."""
+        return await self.entity_manager.lock_all(Comment)

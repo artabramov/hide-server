@@ -26,6 +26,7 @@ async def insert_comment(session=Depends(get_session), cache=Depends(get_cache),
                                       "type": "value_invalid", "msg": E.VALUE_INVALID})
 
     comment_repository = CommentRepository(session, cache)
+    await comment_repository.lock_all()
     comment = Comment(current_user.id, mediafile.id, schema.comment_content)
     comment = await comment_repository.insert(comment)
 
@@ -37,7 +38,7 @@ async def insert_comment(session=Depends(get_session), cache=Depends(get_cache),
     }
 
 @router.get("/comment/{comment_id}", tags=["comments"], response_model=CommentSchema)
-async def select_comment(session = Depends(get_session), cache = Depends(get_cache), schema=Depends(CommentSelectSchema),
+async def select_comment(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(CommentSelectSchema),
                          current_user=Depends(auth_reader)):
     """Select comment."""
     try:
@@ -50,7 +51,7 @@ async def select_comment(session = Depends(get_session), cache = Depends(get_cac
 
 
 @router.put("/comment/{comment_id}", tags=["comments"])
-async def update_comment(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(CommentUpdateSchema),
+async def update_comment(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(CommentUpdateSchema),
                          current_user=Depends(auth_editor)):
     """Update comment."""
     try:
@@ -68,7 +69,7 @@ async def update_comment(session = Depends(get_session), cache = Depends(get_cac
 
 
 @router.delete("/comment/{comment_id}", tags=["comments"])
-async def delete_comment(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(CommentDeleteSchema),
+async def delete_comment(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(CommentDeleteSchema),
                          current_user=Depends(auth_editor)):
     """Delete comment."""
     try:
@@ -80,7 +81,8 @@ async def delete_comment(session = Depends(get_session), cache = Depends(get_cac
     if not current_user.can_admin or comment.user_id != current_user.id:
         raise HTTPException(status_code=403)
 
-    await comment_repository.delete(comment, commit=True)
+    await comment_repository.lock_all()
+    await comment_repository.delete(comment)
 
     mediafile_repository = MediafileRepository(session, cache)
     mediafile = await mediafile_repository.select(comment.mediafile_id)
@@ -91,8 +93,8 @@ async def delete_comment(session = Depends(get_session), cache = Depends(get_cac
 
 
 @router.get("/comments", tags=["comments"])
-async def comments_list(session = Depends(get_session), cache = Depends(get_cache),
-                     schema = Depends(CommentsListSchema), current_user=Depends(auth_reader)):
+async def comments_list(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(CommentsListSchema),
+                        current_user=Depends(auth_reader)):
     """Comments list."""
     comment_repository = CommentRepository(session, cache)
 

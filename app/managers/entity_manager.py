@@ -95,6 +95,11 @@ class EntityManager:
         return async_result.unique().scalars().one_or_none() or 0
 
     @timed
+    async def lock_all(self, cls: object) -> None:
+        """Lock Postgres table."""
+        self.session.execute("LOCK TABLE %s IN ACCESS EXCLUSIVE MODE;" % cls.__tablename__)
+
+    @timed
     async def exists(self, cls: object, **kwargs) -> bool:
         """Check if object exists in Postgres database."""
         async_result = await self.session.execute(select(cls).where(*self._where(cls, **kwargs)).limit(1))
