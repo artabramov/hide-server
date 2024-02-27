@@ -1,9 +1,7 @@
 """Comment SQLAlchemy model."""
 
-from sqlalchemy import Column, Integer, BigInteger, ForeignKey, Text
+from sqlalchemy import Column, BigInteger, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from time import time
-from app.session import Base
 from app.models.basic_model import Basic
 
 
@@ -12,9 +10,6 @@ class Comment(Basic):
 
     __tablename__ = "comments"
 
-    # id = Column(BigInteger, primary_key=True, index=True)
-    # created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
-    # updated_date = Column(Integer, nullable=False, index=True, default=0, onupdate=lambda: int(time()))
     user_id = Column(BigInteger, ForeignKey("users.id"), index=True, nullable=False)
     mediafile_id = Column(BigInteger, ForeignKey('mediafiles.id'), index=True, nullable=False)
     comment_content = Column(Text, nullable=False)

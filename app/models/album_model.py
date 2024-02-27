@@ -1,23 +1,16 @@
 """User and related SQLAlchemy models."""
 
-import enum
-from time import time
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey
 from sqlalchemy.orm import relationship
-from app.session import Base
-from app.config import get_cfg
-
-cfg = get_cfg()
+from app.models.basic_model import Basic
 
 
-class Album(Base):
+
+class Album(Basic):
     """SQLAlchemy model for album."""
 
     __tablename__ = "albums"
 
-    id = Column(BigInteger, primary_key=True, index=True)
-    created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
-    updated_date = Column(Integer, nullable=False, index=True, default=0, onupdate=lambda: int(time()))
     user_id = Column(BigInteger, ForeignKey('users.id'), index=True, nullable=False)
     album_name = Column(String(128), nullable=False, index=True)
     album_summary = Column(String(512), index=False, nullable=True)

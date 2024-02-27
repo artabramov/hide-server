@@ -1,41 +1,53 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.exceptions import RequestValidationError
 from app.session import get_session
 from app.cache import get_cache
-from app.schemas.album_schemas import AlbumEditSchema, AlbumSchema, AlbumsListSchema
+from app.schemas.album_schemas import AlbumSchema, AlbumInsertSchema, AlbumSelectSchema, AlbumUpdateSchema, AlbumDeleteSchema, AlbumsListSchema
 from app.repositories.album_repository import AlbumRepository
 from app.auth import auth_admin, auth_editor, auth_writer, auth_reader
+from app.models.album_model import Album
 from app.errors import E
 
 router = APIRouter()
 
 
 @router.post('/album', tags=['albums'])
-async def insert_album(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(AlbumEditSchema),
+async def insert_album(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(AlbumInsertSchema),
                        current_user=Depends(auth_writer)):
     album_repository = AlbumRepository(session, cache)
-    album = await album_repository.insert(current_user.id, schema.album_name, album_summary=schema.album_summary)
+    album = Album(current_user.id, schema.album_name, album_summary=schema.album_summary)
+    album = await album_repository.insert(album)
     return {
         "album_id": album.id,
     }
 
 
 @router.get('/album/{album_id}', tags=['albums'], response_model=AlbumSchema)
-async def select_album(album_id: int, session = Depends(get_session), cache = Depends(get_cache),
+async def select_album(session = Depends(get_session), cache = Depends(get_cache), schema=Depends(AlbumSelectSchema),
                        current_user=Depends(auth_reader)):
     """Select an album."""
-    album_repository = AlbumRepository(session, cache)
-    album = await album_repository.select(album_id)
+    try:
+        album_repository = AlbumRepository(session, cache)
+        album = await album_repository.select(schema.album_id)
+    except ValueError:
+        raise HTTPException(status_code=404)
+
     return album.to_dict()
 
 
 @router.put('/album/{album_id}', tags=['albums'])
-async def update_album(album_id: int, session = Depends(get_session), cache = Depends(get_cache),
-                       schema = Depends(AlbumEditSchema), current_user=Depends(auth_editor)):
+async def update_album(session = Depends(get_session), cache = Depends(get_cache), schema = Depends(AlbumUpdateSchema),
+                       current_user=Depends(auth_editor)):
     """Update album."""
-    album_repository = AlbumRepository(session, cache)
-    album = await album_repository.select(album_id)
-    await album_repository.update(album, schema.album_name, album_summary=schema.album_summary)
+    try:
+        album_repository = AlbumRepository(session, cache)
+        album = await album_repository.select(schema.album_id)
+    except ValueError:
+        raise HTTPException(status_code=404)
+
+    album.album_name = schema.album_name
+    album.album_summary = schema.album_summary
+    await album_repository.update(album)
     return {}
 
 
@@ -43,8 +55,11 @@ async def update_album(album_id: int, session = Depends(get_session), cache = De
 async def delete_album(album_id: int, session = Depends(get_session), cache = Depends(get_cache),
                        current_user=Depends(auth_admin)):
     """Delete album."""
-    album_repository = AlbumRepository(session, cache)
-    album = await album_repository.select(album_id)
+    try:
+        album_repository = AlbumRepository(session, cache)
+        album = await album_repository.select(album_id)
+    except ValueError:
+        raise HTTPException(status_code=404)
 
     if album.mediafiles_count > 0:
         raise RequestValidationError({"loc": ["path", "album_id"], "input": album_id,
@@ -55,7 +70,7 @@ async def delete_album(album_id: int, session = Depends(get_session), cache = De
 
 
 @router.get('/albums', tags=['albums'])
-async def users_list(session = Depends(get_session), cache = Depends(get_cache),
+async def albums_list(session = Depends(get_session), cache = Depends(get_cache),
                      schema = Depends(AlbumsListSchema), current_user=Depends(auth_reader)):
     """Get users list."""
     album_repository = AlbumRepository(session, cache)

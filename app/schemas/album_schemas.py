@@ -22,18 +22,38 @@ class AlbumSchema(BaseModel):
     user: dict
 
 
-class AlbumEditSchema(BaseModel):
+class AlbumInsertSchema(BaseModel):
     """Pydantic schema for user registration request."""
 
-    album_name: str = Query(..., min_length=1, max_length=128)
+    album_name: str = Query(min_length=1, max_length=128)
     album_summary: Optional[str] = Query(default=None, max_length=512)
+
+
+class AlbumSelectSchema(BaseModel):
+    """Comment selection Pydantic schema."""
+
+    album_id: int = Query(ge=1)
+
+
+class AlbumUpdateSchema(BaseModel):
+    """Pydantic schema for user registration request."""
+
+    album_id: int = Query(ge=1)
+    album_name: str = Query(min_length=1, max_length=128)
+    album_summary: Optional[str] = Query(default=None, max_length=512)
+
+
+class AlbumDeleteSchema(BaseModel):
+    """Comment selection Pydantic schema."""
+
+    album_id: int = Query(ge=1)
 
 
 class AlbumsListSchema(BaseModel):
     """Pydantic schema for users list request."""
 
     album_name__ilike: Optional[str] = None
-    offset: int = 0
-    limit: int = Query(..., ge=1, le=200)
-    order_by: Literal["id", "created_date", "updated_date", "album_name", "mediafiles_count", "mediafiles_size"] = "id"
-    order: Literal["asc", "desc"] = "desc"
+    offset: int = Query(ge=0)
+    limit: int = Query(ge=1, le=200)
+    order_by: Literal["id", "created_date", "updated_date", "album_name", "mediafiles_count", "mediafiles_size"]
+    order: Literal["asc", "desc"]
