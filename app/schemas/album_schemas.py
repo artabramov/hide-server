@@ -1,4 +1,4 @@
-"""Pydantic schemas for user model."""
+"""Album Pydantic schemas."""
 
 from pydantic import BaseModel, Field, SecretStr, validator
 from fastapi import Query, File, UploadFile
@@ -9,7 +9,7 @@ from app.errors import E
 
 
 class AlbumSchema(BaseModel):
-    """Pydantic schema for user selection response."""
+    """Album Pydantic schema."""
 
     id: int
     created_date: int
@@ -23,34 +23,23 @@ class AlbumSchema(BaseModel):
 
 
 class AlbumInsertSchema(BaseModel):
-    """Pydantic schema for user registration request."""
+    """Album insertion Pydantic schema."""
 
+    is_locked: bool
     album_name: str = Query(min_length=1, max_length=128)
     album_summary: Optional[str] = Query(default=None, max_length=512)
-
-
-class AlbumSelectSchema(BaseModel):
-    """Comment selection Pydantic schema."""
-
-    album_id: int = Query(ge=1)
 
 
 class AlbumUpdateSchema(BaseModel):
-    """Pydantic schema for user registration request."""
+    """Album updation Pydantic schema."""
 
-    album_id: int = Query(ge=1)
+    is_locked: bool
     album_name: str = Query(min_length=1, max_length=128)
     album_summary: Optional[str] = Query(default=None, max_length=512)
 
 
-class AlbumDeleteSchema(BaseModel):
-    """Comment selection Pydantic schema."""
-
-    album_id: int = Query(ge=1)
-
-
 class AlbumsListSchema(BaseModel):
-    """Pydantic schema for users list request."""
+    """Albums list Pydantic schema."""
 
     album_name__ilike: Optional[str] = None
     offset: int = Query(ge=0)
