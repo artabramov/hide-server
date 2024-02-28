@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.exceptions import RequestValidationError
 from app.session import get_session
 from app.cache import get_cache
-from app.schemas.mediafile_schemas import MediafileUploadSchema, MediafileUpdateSchema, MediafilesListSchema
+from app.schemas.mediafile_schemas import MediafileInsertValidator, MediafileUpdateValidator, MediafilesListValidator
 from app.repositories.album_repository import AlbumRepository
 from app.repositories.mediafile_repository import MediafileRepository
 from app.auth import auth_admin, auth_editor, auth_writer, auth_reader
@@ -20,7 +20,7 @@ cfg = get_cfg()
 
 @router.post('/mediafile', tags=['mediafiles'])
 async def upload_mediafile(session = Depends(get_session), cache = Depends(get_cache),
-                           schema = Depends(MediafileUploadSchema), current_user=Depends(auth_writer)):
+                           schema = Depends(MediafileInsertValidator), current_user=Depends(auth_writer)):
     """Upload mediafile."""
     if schema.file.content_type not in cfg.MEDIAFILE_MIMES:
         raise HTTPException(status_code=415)
@@ -80,7 +80,7 @@ async def select_mediafile(mediafile_id: int, session = Depends(get_session), ca
 
 @router.put('/mediafile/{mediafile_id}', tags=['mediafiles'])
 async def update_mediafile(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
-                       schema = Depends(MediafileUpdateSchema), current_user=Depends(auth_editor)):
+                       schema = Depends(MediafileUpdateValidator), current_user=Depends(auth_editor)):
     """Update mediafile."""
     try:
         mediafile_repository = MediafileRepository(session, cache)
@@ -129,7 +129,7 @@ async def delete_mediafile(mediafile_id: int, session=Depends(get_session), cach
 
 @router.get('/mediafiles', tags=['mediafiles'])
 async def mediafiles_list(session = Depends(get_session), cache = Depends(get_cache),
-                     schema = Depends(MediafilesListSchema), current_user=Depends(auth_reader)):
+                     schema = Depends(MediafilesListValidator), current_user=Depends(auth_reader)):
     """Get users list."""
     mediafile_repository = MediafileRepository(session, cache)
 

@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from app.errors import E
 
 
-class MediafileUploadSchema(BaseModel):
+class MediafileInsertValidator(BaseModel):
     """Pydantic schema for userpic uploading request."""
 
     album_id: int
@@ -15,7 +15,7 @@ class MediafileUploadSchema(BaseModel):
     file: UploadFile = File(...)
 
 
-class MediafileUpdateSchema(BaseModel):
+class MediafileUpdateValidator(BaseModel):
     """Pydantic schema for user registration request."""
 
     album_id: int
@@ -23,7 +23,7 @@ class MediafileUpdateSchema(BaseModel):
     mediafile_description: Optional[str] = Query(default=None, max_length=512)
 
 
-class MediafilesListSchema(BaseModel):
+class MediafilesListValidator(BaseModel):
     """Pydantic schema for users list request."""
 
     album_id: Optional[int] = None

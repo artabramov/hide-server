@@ -22,7 +22,7 @@ class AlbumSchema(BaseModel):
     user: dict
 
 
-class AlbumInsertSchema(BaseModel):
+class AlbumInsertValidator(BaseModel):
     """Album insertion Pydantic schema."""
 
     is_locked: bool
@@ -30,7 +30,7 @@ class AlbumInsertSchema(BaseModel):
     album_summary: Optional[str] = Query(default=None, max_length=512)
 
 
-class AlbumUpdateSchema(BaseModel):
+class AlbumUpdateValidator(BaseModel):
     """Album updation Pydantic schema."""
 
     is_locked: bool
@@ -38,7 +38,7 @@ class AlbumUpdateSchema(BaseModel):
     album_summary: Optional[str] = Query(default=None, max_length=512)
 
 
-class AlbumsListSchema(BaseModel):
+class AlbumsListValidator(BaseModel):
     """Albums list Pydantic schema."""
 
     album_name__ilike: Optional[str] = None
