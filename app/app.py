@@ -63,7 +63,7 @@ async def validation_exception_handler(request: Request, e: Exception):
     ctx = get_ctx()
     elapsed_time = time.time() - ctx.request_start_time
 
-    log.error('Request failed, elapsed_time=%s, exception=%s.' % (
+    log.error('Request failed, elapsed_time=%s, e=%s.' % (
         "{0:.10f}".format(elapsed_time), str(e)))
 
     return JSONResponse(

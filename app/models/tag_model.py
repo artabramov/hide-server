@@ -10,14 +10,6 @@ from app.config import get_cfg
 cfg = get_cfg()
 
 
-# mediafiles_tags = Table("mediafiles_tags", Base.metadata,
-#                     Column("id", BigInteger, primary_key=True, index=True),
-#                     Column("created_date", Integer, nullable=False, index=True, default=lambda: int(time())),
-#                     Column("mediafile_id", Integer, ForeignKey("mediafiles.id"), index=True),
-#                     Column("tag_id", Integer, ForeignKey("tags.id"), index=True)
-#                 )
-
-
 class MediafileTag(Base):
     __tablename__ = "mediafiles_tags"
 
@@ -37,7 +29,7 @@ class Tag(Base):
 
     id = Column(BigInteger, primary_key=True, index=True)
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
-    tag_value = Column(String(128), nullable=False, unique=True)
+    tag_value = Column(String(512), nullable=False, unique=True)
 
     mediafiles = relationship("Mediafile", secondary=MediafileTag.__table__, back_populates="mediafile_tags", lazy="noload")
 

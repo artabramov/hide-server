@@ -20,6 +20,8 @@ class Config:
     POSTGRES_HOST: str
     POSTGRES_PORT: int
     POSTGRES_DATABASE: str
+    POSTGRES_POOL_SIZE: int
+    POSTGRES_POOL_OVERFLOW: int
 
     REDIS_HOST: str
     REDIS_PORT: int

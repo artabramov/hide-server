@@ -40,8 +40,9 @@ class Mediafile(Base):
     favorite = relationship("Favorite", back_populates="favorite_mediafile", lazy="noload")
     comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload")
 
-    def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, filesize: int, width: int,
-                 height: int, mimetype: str,  format: str, mode: str, thumbnail: str, mediafile_description: str = None):
+    def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, thumbnail: str, 
+                 filesize: int=None, mimetype: str=None, width: int=None, height: int=None,
+                 format: str=None, mode: str=None, mediafile_description: str = None):
         """Init Mediafile model."""
         self.user_id = user_id
         self.album_id = album_id

@@ -3,15 +3,13 @@
 from pydantic import BaseModel, Field, SecretStr, validator
 from fastapi import Query, File, UploadFile
 from typing import Optional, List, Literal, Union
-from fastapi.exceptions import RequestValidationError
-from app.errors import E
 
 
 class MediafileInsertValidator(BaseModel):
     """Pydantic schema for userpic uploading request."""
 
     album_id: int
-    mediafile_description: Optional[str] = None
+    mediafile_description: Optional[str] = Query(default=None, max_length=512)
     file: UploadFile = File(...)
 
 

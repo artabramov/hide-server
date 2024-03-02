@@ -23,7 +23,7 @@ def timed(func: Callable) -> Callable:
         except Exception as e:
             elapsed_time = time.time() - start_time
 
-            log.debug("Execution failed, function=%s, module=%s, elapsed_time=%s, args=%s, kwargs=%s, e=%s." % (
+            log.error("Execution failed, function=%s, module=%s, elapsed_time=%s, args=%s, kwargs=%s, e=%s." % (
                 func.__qualname__, func.__module__, "{0:.10f}".format(elapsed_time), str(args), str(kwargs), str(e)))
 
             raise e

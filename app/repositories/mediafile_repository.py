@@ -1,28 +1,16 @@
 """User repository."""
 
-from fastapi.exceptions import RequestValidationError
-from app.managers.entity_manager import EntityManager
-from app.managers.cache_manager import CacheManager
 from app.managers.file_manager import FileManager
 from app.managers.image_manager import ImageManager
-from app.models.user_model import User
-from app.models.album_model import Album
 from app.models.mediafile_model import Mediafile
 from app.models.metadata_model import Metadata
 from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
-from app.models.favorite_model import Favorite
-from app.models.comment_model import Comment
-from app.helpers.jwt_helper import JWTHelper
-from app.helpers.mfa_helper import MFAHelper
-from app.helpers.hash_helper import HashHelper
 from app.helpers.tag_helper import TagHelper
-from fastapi import HTTPException, UploadFile
-from PIL import Image, ImageOps
+from PIL import Image
 from app.repositories.base_repository import BaseRepository
-from app.errors import E
 from app.config import get_cfg
-import time
+import asyncio
 import os
 
 cfg = get_cfg()
@@ -31,32 +19,56 @@ cfg = get_cfg()
 class MediafileRepository(BaseRepository):
     """Mediafile repository."""
 
-    async def insert(self, mediafile: Mediafile, im: Image, commit: bool=False) -> Mediafile:
-        """Insert mediafile."""
-        await self.entity_manager.insert(mediafile)
-
-        # colorset
+    async def _insert_colorset(self, mediafile_id: int, im: Image):
+        """Extract and insert colorset."""
         mediafile_colors = ImageManager.get_colors(im)
-        colorset = Colorset(mediafile.id, **mediafile_colors)
-        await self.entity_manager.insert(colorset)
+        colorset = Colorset(mediafile_id, **mediafile_colors)
+        await self.entity_manager.insert(colorset, flush=False)
 
-        # metadata
+    async def _insert_metadata(self, mediafile_id: int, im: Image):
+        """Parse and insert metadata."""
         metadatas = FileManager.get_metadata(im)
         for meta_key in metadatas:
-            metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
-            await self.entity_manager.insert(metadata)
+            metadata = Metadata(mediafile_id, meta_key, str(metadatas[meta_key]))
+            await self.entity_manager.insert(metadata, flush=False)
 
-        # tags
-        if mediafile.mediafile_description:
-            tag_values = TagHelper.get_tags(mediafile.mediafile_description)
+    async def _insert_tags(self, mediafile_id: int, mediafile_description: str=None):
+        """Parse description and insert tags."""
+        if mediafile_description:
+            tag_values = TagHelper.get_tags(mediafile_description)
             for tag_value in tag_values:
                 tag = await self.entity_manager.select_by(Tag, tag_value__eq=tag_value)
                 if not tag:
                     tag = Tag(tag_value)
                     await self.entity_manager.insert(tag)
 
-                mediafile_tag = MediafileTag(mediafile.id, tag.id)
-                await self.entity_manager.insert(mediafile_tag)
+                mediafile_tag = MediafileTag(mediafile_id, tag.id)
+                await self.entity_manager.insert(mediafile_tag, flush=False)
+
+    async def insert(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
+        """Insert mediafile."""
+        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile.filename)
+        mediafile.filesize = FileManager.get_filesize(mediafile_path)
+        mediafile.mimetype = FileManager.get_mimetype(mediafile_path)
+
+        im = ImageManager.open_image(mediafile_path)
+        mediafile.width = im.width
+        mediafile.height = im.height
+        mediafile.format = im.format
+        mediafile.mode = im.mode
+
+        await self.entity_manager.insert(mediafile)
+        tasks = [
+            asyncio.create_task(self._insert_colorset(mediafile.id, im)),
+            asyncio.create_task(self._insert_metadata(mediafile.id, im)),
+            asyncio.create_task(self._insert_tags(mediafile.id, mediafile.mediafile_description)),
+        ]
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+        errors = list(filter(lambda x: x.exception() is not None, done))
+        if errors:
+            for pending_task in pending:
+                pending_task.cancel()
+            raise errors[0].exception()
 
         if commit:
             await self.entity_manager.commit()

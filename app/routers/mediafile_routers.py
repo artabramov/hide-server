@@ -8,7 +8,6 @@ from app.repositories.mediafile_repository import MediafileRepository
 from app.auth import auth_admin, auth_editor, auth_writer, auth_reader
 from app.managers.file_manager import FileManager
 from app.managers.image_manager import ImageManager
-from PIL import Image, ImageOps
 from app.models.mediafile_model import Mediafile
 from app.errors import E
 from app.config import get_cfg
@@ -28,6 +27,7 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
     try:
         album_repository = AlbumRepository(session, cache)
         album = await album_repository.select(schema.album_id)
+
     except ValueError:
         raise RequestValidationError({"loc": ["query", "album_id"], "input": schema.album_id,
                                       "type": "value_invalid", "msg": E.VALUE_INVALID})
@@ -40,16 +40,12 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
         thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
         ImageManager.create_thumbnail(thumbnail_path)
 
-        mimetype = FileManager.get_mimetype(mediafile_path)
-        filesize = FileManager.get_filesize(mediafile_path)
-        im = ImageManager.open_image(mediafile_path)
-        mediafile = Mediafile(current_user.id, album.id, schema.file.filename, mediafile_filename, filesize, im.width,
-                              im.height, mimetype, im.format, im.mode, thumbnail_filename,
+        mediafile = Mediafile(current_user.id, album.id, schema.file.filename, mediafile_filename, thumbnail_filename,
                               mediafile_description=schema.mediafile_description)
         
         mediafile_repository = MediafileRepository(session, cache)
         await mediafile_repository.lock_all()
-        await mediafile_repository.insert(mediafile, im)
+        await mediafile_repository.insert(mediafile)
 
     except Exception as e:
         if mediafile_path:

@@ -32,10 +32,12 @@ class EntityManager:
         self.session = session
 
     @timed
-    async def insert(self, obj: object, commit: bool=False) -> None:
+    async def insert(self, obj: object, flush: bool=True, commit: bool=False) -> None:
         """Insert SQLAlchemy object into Postgres database."""
         self.session.add(obj)
-        await self.session.flush()
+
+        if flush:
+            await self.flush()
 
         if commit:
             await self.commit()
@@ -53,10 +55,12 @@ class EntityManager:
         return async_result.unique().scalars().one_or_none()
 
     @timed
-    async def update(self, obj: object, commit: bool = False) -> None:
+    async def update(self, obj: object, flush: bool=True, commit: bool = False) -> None:
         """Update SQLAlchemy object in Postgres database."""
         await self.session.merge(obj)
-        await self.session.flush()
+
+        if flush:
+            await self.flush()
 
         if commit:
             await self.commit()
@@ -118,13 +122,17 @@ class EntityManager:
 
     #     return res
 
-    async def commit(self) -> None:
-        """Commit transaction."""
-        return await self.session.commit()
+    async def flush(self):
+        """Flush session."""
+        await self.session.flush()
 
-    async def rollback(self) -> None:
+    async def commit(self):
+        """Commit transaction."""
+        await self.session.commit()
+
+    async def rollback(self):
         """Rollback transaction."""
-        return await self.session.rollback()
+        await self.session.rollback()
 
     def _where(self, cls, **kwargs):
         """Make WHERE statement."""
