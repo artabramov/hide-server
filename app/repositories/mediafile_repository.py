@@ -19,10 +19,9 @@ cfg = get_cfg()
 class MediafileRepository(BaseRepository):
     """Mediafile repository."""
 
-    async def _create_thumbnail(self, mediafile_filename: str):
+    async def _create_thumbnail(self, mediafile: Mediafile):
         """Create thumbnail and return its filename."""
-        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
-        thumbnail_filename = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
+        thumbnail_filename = await FileManager.file_copy(mediafile.mediafile_path, cfg.THUMBNAIL_PATH)
         thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
         ImageManager.create_thumbnail(thumbnail_path)
         return thumbnail_filename

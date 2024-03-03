@@ -20,6 +20,7 @@ class Mediafile(Base):
     __tablename__ = "mediafiles"
     _mediafile_path = None
     _mediafile_image = None
+    _thumbnail_path = None
 
     id = Column(BigInteger, primary_key=True, index=True)
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
@@ -36,6 +37,7 @@ class Mediafile(Base):
 
     original_filename = Column(String(512), nullable=False, index=True)
     mediafile_filename = Column(String(512), nullable=False, unique=True)
+    thumbnail_filename = Column(String(512), nullable=False, unique=True)
     mediafile_description = Column(String(512), index=False, nullable=True)
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
@@ -48,12 +50,13 @@ class Mediafile(Base):
     comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, mediafile_filename: str,
-                 mediafile_description: str = None):
+                 thumbnail_filename: str=None, mediafile_description: str = None):
         """Init Mediafile model."""
         self.user_id = user_id
         self.album_id = album_id
         self.original_filename = original_filename
         self.mediafile_filename = mediafile_filename
+        self.thumbnail_filename = thumbnail_filename
         self.mediafile_description = mediafile_description
         self.comments_count = 0
 
@@ -71,6 +74,13 @@ class Mediafile(Base):
             self._mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, self.mediafile_filename)
         return self._mediafile_path
     
+    @property
+    def thumbnail_path(self):
+        """Get thumbnail absolute path."""
+        if not self._thumbnail_path:
+            self._thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, self.thumbnail_filename)
+        return self._thumbnail_path
+
     @property
     def mediafile_image(self):
         """Get mediafile image."""
@@ -96,6 +106,7 @@ class Mediafile(Base):
 
             "original_filename": self.original_filename,
             "mediafile_filename": self.mediafile_filename,
+            "thumbnail_filename": self.thumbnail_filename,
             "mediafile_description": self.mediafile_description,
             "comments_count": self.comments_count,
 
