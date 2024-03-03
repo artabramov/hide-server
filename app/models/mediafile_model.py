@@ -3,15 +3,23 @@
 import enum
 from time import time
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey
+from app.managers.file_manager import FileManager
+from app.managers.image_manager import ImageManager
 from sqlalchemy.orm import relationship
 from app.session import Base
 from app.models.tag_model import MediafileTag
+from app.config import get_cfg
+import os
+
+cfg = get_cfg()
 
 
 class Mediafile(Base):
     """Mediafile SQLAlchemy model."""
 
     __tablename__ = "mediafiles"
+    _mediafile_path = None
+    _mediafile_image = None
 
     id = Column(BigInteger, primary_key=True, index=True)
     created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
@@ -19,15 +27,15 @@ class Mediafile(Base):
     user_id = Column(BigInteger, ForeignKey("users.id"), index=True, nullable=False)
     album_id = Column(BigInteger, ForeignKey("albums.id"), index=True, nullable=False)
 
-    original_filename = Column(String(512), nullable=False, index=True)
-    filename = Column(String(512), nullable=False, unique=True)
     mimetype = Column(String(512), nullable=False, index=True)
     filesize = Column(BigInteger, nullable=False, index=True)
     width = Column(Integer, nullable=False, index=True)
     height = Column(Integer, nullable=False, index=True)
     format = Column(String(40), nullable=False, index=True)
     mode = Column(String(40), nullable=False, index=True)
-    thumbnail = Column(String(512), nullable=True, unique=True)
+
+    original_filename = Column(String(512), nullable=False, index=True)
+    mediafile_filename = Column(String(512), nullable=False, unique=True)
     mediafile_description = Column(String(512), index=False, nullable=True)
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
@@ -37,26 +45,38 @@ class Mediafile(Base):
     mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
     mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
 
-    favorite = relationship("Favorite", back_populates="favorite_mediafile", lazy="noload")
     comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload")
 
-    def __init__(self, user_id: int, album_id: int, original_filename: str, filename: str, thumbnail: str, 
-                 filesize: int=None, mimetype: str=None, width: int=None, height: int=None,
-                 format: str=None, mode: str=None, mediafile_description: str = None):
+    def __init__(self, user_id: int, album_id: int, original_filename: str, mediafile_filename: str,
+                 mediafile_description: str = None):
         """Init Mediafile model."""
         self.user_id = user_id
         self.album_id = album_id
         self.original_filename = original_filename
-        self.filename = filename
-        self.filesize = filesize
-        self.width = width
-        self.height = height
-        self.mimetype = mimetype
-        self.format = format
-        self.mode = mode
-        self.thumbnail = thumbnail
+        self.mediafile_filename = mediafile_filename
         self.mediafile_description = mediafile_description
         self.comments_count = 0
+
+        self.mimetype = FileManager.get_mimetype(self.mediafile_path)
+        self.filesize = FileManager.get_filesize(self.mediafile_path)
+        self.width = self.mediafile_image.width
+        self.height = self.mediafile_image.height
+        self.format = self.mediafile_image.format
+        self.mode = self.mediafile_image.mode
+
+    @property
+    def mediafile_path(self):
+        """Get mediafile absolute path."""
+        if not self._mediafile_path:
+            self._mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, self.mediafile_filename)
+        return self._mediafile_path
+    
+    @property
+    def mediafile_image(self):
+        """Get mediafile image."""
+        if not self._mediafile_image:
+            self._mediafile_image = ImageManager.open_image(self.mediafile_path)
+        return self._mediafile_image
 
     def to_dict(self):
         """Return Mediafile model as dictionary."""
@@ -66,17 +86,19 @@ class Mediafile(Base):
             "updated_date": self.updated_date,
             "user_id": self.user_id,
             "album_id": self.album_id,
-            "original_filename": self.original_filename,
-            "filename": self.filename,
+
+            "mimetype": self.mimetype,
             "filesize": self.filesize,
             "width": self.width,
             "height": self.height,
-            "mimetype": self.mimetype,
             "format": self.format,
             "mode": self.mode,
-            "thumbnail": self.thumbnail,
+
+            "original_filename": self.original_filename,
+            "mediafile_filename": self.mediafile_filename,
             "mediafile_description": self.mediafile_description,
             "comments_count": self.comments_count,
+
             "mediafile_metadata": {x.meta_key: x.meta_value for x in self.mediafile_metadata},
             "mediafile_colorset": self.mediafile_colorset.to_dict() if self.mediafile_colorset else {},
             "mediafile_tags": [x.tag_value for x in self.mediafile_tags],

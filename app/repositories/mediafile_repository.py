@@ -19,6 +19,14 @@ cfg = get_cfg()
 class MediafileRepository(BaseRepository):
     """Mediafile repository."""
 
+    async def _create_thumbnail(self, mediafile_filename: str):
+        """Create thumbnail and return its filename."""
+        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
+        thumbnail_filename = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
+        thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
+        ImageManager.create_thumbnail(thumbnail_path)
+        return thumbnail_filename
+
     async def _insert_colorset(self, mediafile_id: int, im: Image):
         """Extract and insert colorset."""
         mediafile_colors = ImageManager.get_colors(im)
@@ -47,20 +55,11 @@ class MediafileRepository(BaseRepository):
 
     async def insert(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
         """Insert mediafile."""
-        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile.filename)
-        mediafile.filesize = FileManager.get_filesize(mediafile_path)
-        mediafile.mimetype = FileManager.get_mimetype(mediafile_path)
-
-        im = ImageManager.open_image(mediafile_path)
-        mediafile.width = im.width
-        mediafile.height = im.height
-        mediafile.format = im.format
-        mediafile.mode = im.mode
-
         await self.entity_manager.insert(mediafile)
+
         tasks = [
-            asyncio.create_task(self._insert_colorset(mediafile.id, im)),
-            asyncio.create_task(self._insert_metadata(mediafile.id, im)),
+            asyncio.create_task(self._insert_colorset(mediafile.id, mediafile.mediafile_image)),
+            asyncio.create_task(self._insert_metadata(mediafile.id, mediafile.mediafile_image)),
             asyncio.create_task(self._insert_tags(mediafile.id, mediafile.mediafile_description)),
         ]
         done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)

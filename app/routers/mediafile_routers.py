@@ -34,13 +34,13 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
     
     try:
         mediafile_filename = await FileManager.file_upload(schema.file, cfg.MEDIAFILE_PATH)
-        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
+        # mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
 
-        thumbnail_filename = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
-        thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
-        ImageManager.create_thumbnail(thumbnail_path)
+        # thumbnail_filename = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
+        # thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
+        # ImageManager.create_thumbnail(thumbnail_path)
 
-        mediafile = Mediafile(current_user.id, album.id, schema.file.filename, mediafile_filename, thumbnail_filename,
+        mediafile = Mediafile(current_user.id, album.id, schema.file.filename, mediafile_filename,
                               mediafile_description=schema.mediafile_description)
         
         mediafile_repository = MediafileRepository(session, cache)
@@ -48,11 +48,12 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
         await mediafile_repository.insert(mediafile)
 
     except Exception as e:
-        if mediafile_path:
-            await FileManager.file_delete(mediafile_path)
+        pass
+    #     if mediafile_path:
+    #         await FileManager.file_delete(mediafile_path)
 
-        if thumbnail_path:
-            await FileManager.file_delete(thumbnail_path)
+        # if thumbnail_path:
+        #     await FileManager.file_delete(thumbnail_path)
 
         raise e
 
