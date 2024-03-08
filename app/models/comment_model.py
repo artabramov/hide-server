@@ -1,30 +1,30 @@
-"""Comment SQLAlchemy model."""
+"""SQLAlchemy comment model."""
 
-from sqlalchemy import Column, BigInteger, ForeignKey, Text
+from sqlalchemy import Column, BigInteger, ForeignKey, String
 from sqlalchemy.orm import relationship
 from app.models.basic_model import Basic
 
 
 class Comment(Basic):
-    """Comment SQLAlchemy model."""
+    """SQLAlchemy comment model."""
 
     __tablename__ = "comments"
 
     user_id = Column(BigInteger, ForeignKey("users.id"), index=True, nullable=False)
-    mediafile_id = Column(BigInteger, ForeignKey('mediafiles.id'), index=True, nullable=False)
-    comment_content = Column(Text, nullable=False)
+    mediafile_id = Column(BigInteger, ForeignKey("mediafiles.id"), index=True, nullable=False)
+    comment_content = Column(String(512), index=False, nullable=False)
 
     comment_user = relationship("User", back_populates="comment", lazy="joined")
     comment_mediafile = relationship("Mediafile", back_populates="comment", lazy="noload")
 
     def __init__(self, user_id: int, mediafile_id: int, comment_content: str):
-        """Init Comment model."""
+        """Init model."""
         self.user_id = user_id
         self.mediafile_id = mediafile_id
         self.comment_content = comment_content
 
-    def to_dict(self):
-        """Return Comment model as dictionary."""
+    def to_dict(self) -> dict:
+        """Get model as dict."""
         return {
             "id": self.id,
             "created_date": self.created_date,

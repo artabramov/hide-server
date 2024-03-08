@@ -1,4 +1,4 @@
-"""Comment Pydantic schemas."""
+"""Pydantic comment schemas."""
 
 from pydantic import BaseModel
 from fastapi import Query
@@ -6,7 +6,7 @@ from typing import Literal
 
 
 class CommentSchema(BaseModel):
-    """Comment Pydantic schema."""
+    """Pydantic comment schema."""
 
     id: int
     created_date: int
@@ -18,20 +18,20 @@ class CommentSchema(BaseModel):
 
 
 class CommentInsertSchema(BaseModel):
-    """Comment insertion Pydantic schema."""
+    """Pydantic comment insertion schema."""
 
     mediafile_id: int = Query(ge=1)
-    comment_content: str
+    comment_content: str = Query(min_length=1, max_length=512)
 
 
 class CommentSelectSchema(BaseModel):
-    """Comment selection Pydantic schema."""
+    """Pydantic comment selection schema."""
 
     comment_id: int = Query(ge=1)
 
 
 class CommentUpdateSchema(BaseModel):
-    """Comment updation Pydantic schema."""
+    """Pydantic comment updation schema."""
 
     comment_id: int = Query(ge=1)
     comment_content: str
