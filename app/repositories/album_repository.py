@@ -32,7 +32,7 @@ class AlbumRepository(PrimaryRepository):
         await self.entity_manager.delete(album, commit=commit)
         await self.cache_manager.delete(album)
 
-    async def select_all(self, **kwargs) -> list:
+    async def select_all(self, **kwargs) -> list[Album]:
         """Select albums."""
         albums = await self.entity_manager.select_all(Album, **kwargs)
         for album in albums:

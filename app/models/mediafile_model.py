@@ -1,30 +1,26 @@
-"""Mediafile SQLAlchemy model."""
+"""SQLAlchemy mediafile models."""
 
-import enum
-from time import time
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey
 from app.managers.file_manager import FileManager
 from app.managers.image_manager import ImageManager
 from sqlalchemy.orm import relationship
-from app.session import Base
 from app.models.tag_model import MediafileTag
 from app.config import get_cfg
 import os
+from app.models.primary_model import Primary
 
 cfg = get_cfg()
 
 
-class Mediafile(Base):
-    """Mediafile SQLAlchemy model."""
+class Mediafile(Primary):
+    """SQLAlchemy mediafile model."""
 
     __tablename__ = "mediafiles"
     _mediafile_path = None
     _mediafile_image = None
     _thumbnail_path = None
+    _thumbnail_image = None
 
-    id = Column(BigInteger, primary_key=True, index=True)
-    created_date = Column(Integer, nullable=False, index=True, default=lambda: int(time()))
-    updated_date = Column(Integer, nullable=False, index=True, default=0, onupdate=lambda: int(time()))
     user_id = Column(BigInteger, ForeignKey("users.id"), index=True, nullable=False)
     album_id = Column(BigInteger, ForeignKey("albums.id"), index=True, nullable=False)
 
@@ -47,11 +43,11 @@ class Mediafile(Base):
     mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
     mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
 
-    comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload")
+    mediafile_comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, mediafile_filename: str,
                  thumbnail_filename: str=None, mediafile_description: str = None):
-        """Init Mediafile model."""
+        """Init model."""
         self.user_id = user_id
         self.album_id = album_id
         self.original_filename = original_filename
@@ -69,31 +65,34 @@ class Mediafile(Base):
 
     @property
     def mediafile_path(self):
-        """Get mediafile absolute path."""
+        """Mediafile path."""
         if not self._mediafile_path:
             self._mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, self.mediafile_filename)
         return self._mediafile_path
     
     @property
-    def thumbnail_path(self):
-        """Get thumbnail absolute path."""
-        if not self._thumbnail_path:
-            self._thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, self.thumbnail_filename)
-        return self._thumbnail_path
-
-    @property
     def mediafile_image(self):
-        """Get mediafile image."""
+        """Mediafile image."""
         if not self._mediafile_image:
             self._mediafile_image = ImageManager.open_image(self.mediafile_path)
         return self._mediafile_image
 
     @property
+    def thumbnail_path(self):
+        """Thumbnail path."""
+        if not self._thumbnail_path and self.thumbnail_filename:
+            self._thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, self.thumbnail_filename)
+        return self._thumbnail_path
+
+    @property
     def thumbnail_image(self):
-        pass
+        """Thumbnail image."""
+        if not self._thumbnail_image and self.thumbnail_filename:
+            self._thumbnail_image = ImageManager.open_image(self.thumbnail_path)
+        return self._thumbnail_image
 
     def to_dict(self):
-        """Return Mediafile model as dictionary."""
+        """Get model as dict."""
         return {
             "id": self.id,
             "created_date": self.created_date,
@@ -109,8 +108,8 @@ class Mediafile(Base):
             "mode": self.mode,
 
             "original_filename": self.original_filename,
-            "mediafile_filename": self.mediafile_filename,
-            "thumbnail_filename": self.thumbnail_filename,
+            "mediafile_image": cfg.MEDIAFILE_URL + self.mediafile_filename,
+            "thumbnail_image": cfg.THUMBNAIL_URL + self.thumbnail_filename if self.thumbnail_filename else None,
             "mediafile_description": self.mediafile_description,
             "comments_count": self.comments_count,
 

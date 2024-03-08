@@ -10,7 +10,7 @@ class Album(Primary):
 
     __tablename__ = "albums"
 
-    user_id = Column(BigInteger, ForeignKey('users.id'), index=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.id"), index=True, nullable=False)
     is_locked = Column(Boolean, nullable=False, default=False, index=True)
     album_name = Column(String(128), nullable=False, index=True)
     album_description = Column(String(512), index=False, nullable=True)

@@ -67,7 +67,6 @@ class ImageManager:
         palette = Image.new('P', (1,1))
         palette.putpalette(colors)
         out = im.quantize(colors=len(colors), palette=palette, dither=Image.Dither.NONE)
-        out.save("/hide/data/mediafiles/cga.png")
 
         colordict = ImageManager.get_colors_dict(out)
         color_names = ImageManager.get_colors_keys()

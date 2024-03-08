@@ -9,7 +9,7 @@ from app.models.album_model import Album
 router = APIRouter()
 
 
-@router.post('/album', tags=['albums'])
+@router.post("/album", tags=["albums"])
 async def insert_album(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(AlbumInsertSchema),
                        current_user=Depends(auth_editor)):
     """Insert album."""
@@ -21,7 +21,7 @@ async def insert_album(session=Depends(get_session), cache=Depends(get_cache), s
     }
 
 
-@router.get('/album/{album_id}', tags=['albums'], response_model=AlbumSchema)
+@router.get("/album/{album_id}", tags=["albums"], response_model=AlbumSchema)
 async def select_album(album_id: int, session=Depends(get_session), cache=Depends(get_cache),
                        current_user=Depends(auth_reader)):
     """Select album."""
@@ -33,7 +33,7 @@ async def select_album(album_id: int, session=Depends(get_session), cache=Depend
     return album.to_dict()
 
 
-@router.put('/album/{album_id}', tags=['albums'])
+@router.put("/album/{album_id}", tags=["albums"])
 async def update_album(album_id: int, session=Depends(get_session), cache=Depends(get_cache),
                        schema=Depends(AlbumUpdateSchema), current_user=Depends(auth_editor)):
     """Update album."""
@@ -49,7 +49,7 @@ async def update_album(album_id: int, session=Depends(get_session), cache=Depend
     return {}
 
 
-@router.delete('/delete/{album_id}', tags=['albums'])
+@router.delete("/delete/{album_id}", tags=["albums"])
 async def delete_album(album_id: int, session=Depends(get_session), cache=Depends(get_cache),
                        current_user=Depends(auth_editor)):
     """Delete album."""
@@ -66,7 +66,7 @@ async def delete_album(album_id: int, session=Depends(get_session), cache=Depend
     return {}
 
 
-@router.get('/albums', tags=['albums'])
+@router.get("/albums", tags=["albums"])
 async def albums_list(session = Depends(get_session), cache = Depends(get_cache),
                       schema = Depends(AlbumsListSchema), current_user=Depends(auth_reader)):
     """Albums list."""

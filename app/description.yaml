@@ -1,8 +1,13 @@
 ## Roles and permissions
 | action                       | denied  | reader  | writer  | editor  | admin   |
 | ---------------------------- | ------- | ------- | ------- | ------- | ------- |
-| insert album                 | no      | no      | no      | **yes** | **yes** |
-| select album                 | no      | **yes** | **yes** | **yes** | **yes** |
-| update album                 | no      | no      | no      | **yes** | **yes** |
-| delete album                 | no      | no      | no      | **yes** | **yes** |
-| albums list                  | no      | **yes** | **yes** | **yes** | **yes** |
+| insert album                 | —       | —       | —       | **yes** | **yes** |
+| select album                 | —       | **yes** | **yes** | **yes** | **yes** |
+| update album                 | —       | —       | —       | **yes** | **yes** |
+| delete album                 | —       | —       | —       | **yes** | **yes** |
+| albums list                  | —       | **yes** | **yes** | **yes** | **yes** |
+| insert mediafile             | —       | —       | **yes** | **yes** | **yes** |
+| select mediafile             | —       | **yes** | **yes** | **yes** | **yes** |
+| update mediafile             | —       | —       | —       | **yes** | **yes** |
+| delete mediafile             | —       | —       | —       | **yes** | **yes** |
+| mediafiles list              | —       | **yes** | **yes** | **yes** | **yes** |

@@ -1,4 +1,4 @@
-"""User repository."""
+"""Mediafile repository."""
 
 from app.managers.file_manager import FileManager
 from app.managers.image_manager import ImageManager
@@ -7,11 +7,9 @@ from app.models.metadata_model import Metadata
 from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
 from app.helpers.tag_helper import TagHelper
-from PIL import Image
 from app.repositories.primary_repository import PrimaryRepository
 from app.config import get_cfg
 import asyncio
-import os
 
 cfg = get_cfg()
 
@@ -20,24 +18,24 @@ class MediafileRepository(PrimaryRepository):
     """Mediafile repository."""
 
     async def _create_thumbnail(self, mediafile: Mediafile):
-        """Create thumbnail and return its filename."""
+        """Create thumbnail."""
         mediafile.thumbnail_filename = await FileManager.file_copy(mediafile.mediafile_path, cfg.THUMBNAIL_PATH)
         ImageManager.create_thumbnail(mediafile.thumbnail_path)
 
-    async def _create_colorset(self, mediafile: Mediafile):
+    async def _insert_colorset(self, mediafile: Mediafile):
         """Extract and insert colorset."""
         mediafile_colors = ImageManager.get_colors(mediafile.mediafile_image)
         colorset = Colorset(mediafile.id, **mediafile_colors)
         await self.entity_manager.insert(colorset, flush=False)
 
-    async def _create_metadata(self, mediafile: Mediafile):
+    async def _insert_metadata(self, mediafile: Mediafile):
         """Parse and insert metadata."""
         metadatas = FileManager.get_metadata(mediafile.mediafile_image)
         for meta_key in metadatas:
             metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
             await self.entity_manager.insert(metadata, flush=False)
 
-    async def _create_tags(self, mediafile: Mediafile):
+    async def _insert_tags(self, mediafile: Mediafile):
         """Parse description and insert tags."""
         if mediafile.mediafile_description:
             tag_values = TagHelper.get_tags(mediafile.mediafile_description)
@@ -50,15 +48,25 @@ class MediafileRepository(PrimaryRepository):
                 mediafile_tag = MediafileTag(mediafile.id, tag.id)
                 await self.entity_manager.insert(mediafile_tag, flush=False)
 
+    async def _delete_tags(self, mediafile: Mediafile):
+        """Delete mediafile tags."""
+        for tag in mediafile.mediafile_tags:
+            mediafile_tag = await self.entity_manager.select_by(MediafileTag, mediafile_id__eq=mediafile.id, tag_id__eq=tag.id)
+            await self.entity_manager.delete(mediafile_tag)
+
+            tag_used = await self.entity_manager.count_all(MediafileTag, mediafile_id__not=mediafile.id, tag_id__eq=tag.id)
+            if not tag_used:
+                await self.entity_manager.delete(tag)
+
     async def insert(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
         """Insert mediafile."""
         await self.entity_manager.insert(mediafile)
 
         tasks = [
             asyncio.create_task(self._create_thumbnail(mediafile)),
-            asyncio.create_task(self._create_colorset(mediafile)),
-            asyncio.create_task(self._create_metadata(mediafile)),
-            asyncio.create_task(self._create_tags(mediafile)),
+            asyncio.create_task(self._insert_colorset(mediafile)),
+            asyncio.create_task(self._insert_metadata(mediafile)),
+            asyncio.create_task(self._insert_tags(mediafile)),
         ]
 
         # we should not interrupt tasks executing by using asyncio.FIRST_EXCEPTION mode to avoid
@@ -75,23 +83,43 @@ class MediafileRepository(PrimaryRepository):
 
         return mediafile
 
-    async def select(self, mediafile_id: int) -> Mediafile:
+    async def select(self, mediafile_id: int) -> Mediafile | None:
         """Select mediafile."""
         mediafile = await self.cache_manager.get(Mediafile, mediafile_id)
         if not mediafile:
             mediafile = await self.entity_manager.select(Mediafile, mediafile_id)
 
-        if not mediafile:
-            raise ValueError
+        if mediafile:
+            await self.cache_manager.set(mediafile)
+            return mediafile
 
-        await self.cache_manager.set(mediafile)
-        return mediafile
-
-    async def update(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
+    async def update(self, mediafile: Mediafile, commit: bool=False):
         """Update mediafile."""
-        await self.entity_manager.update(mediafile, commit=commit)
+        await self.entity_manager.update(mediafile)
+        await self._delete_tags(mediafile)
+        await self._insert_tags(mediafile)
+
+        if commit:
+            await self.entity_manager.commit()
+
         await self.cache_manager.delete(mediafile)
-        return mediafile
+
+    async def delete(self, mediafile: Mediafile, commit: bool=False):
+        """Delete mediafile."""
+        await self.entity_manager.delete(mediafile)
+        await self._delete_tags(mediafile)
+
+        if commit:
+            await self.entity_manager.commit()
+
+        await self.cache_manager.delete(mediafile)
+
+    async def select_all(self, **kwargs) -> list[Mediafile]:
+        """Select mediafiles."""
+        mediafiles = await self.entity_manager.select_all(Mediafile, **kwargs)
+        for mediafile in mediafiles:
+            await self.cache_manager.set(mediafile)
+        return mediafiles
 
     async def count_all(self, **kwargs) -> int:
         """Count mediafiles."""
@@ -101,7 +129,7 @@ class MediafileRepository(PrimaryRepository):
         """Sum mediafiles column."""
         return await self.entity_manager.sum_all(Mediafile, column, **kwargs)
 
-    async def lock_all(self) -> None:
+    async def lock_all(self):
         """Lock mediafiles."""
         return await self.entity_manager.lock_all(Mediafile)
 

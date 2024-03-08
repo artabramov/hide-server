@@ -15,7 +15,7 @@ class Comment(Primary):
     comment_content = Column(String(512), index=False, nullable=False)
 
     comment_user = relationship("User", back_populates="comment", lazy="joined")
-    comment_mediafile = relationship("Mediafile", back_populates="comment", lazy="noload")
+    comment_mediafile = relationship("Mediafile", back_populates="mediafile_comment", lazy="noload")
 
     def __init__(self, user_id: int, mediafile_id: int, comment_content: str):
         """Init model."""
