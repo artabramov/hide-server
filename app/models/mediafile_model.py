@@ -37,7 +37,7 @@ class Mediafile(Base):
 
     original_filename = Column(String(512), nullable=False, index=True)
     mediafile_filename = Column(String(512), nullable=False, unique=True)
-    thumbnail_filename = Column(String(512), nullable=False, unique=True)
+    thumbnail_filename = Column(String(512), nullable=True, unique=True)
     mediafile_description = Column(String(512), index=False, nullable=True)
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
@@ -87,6 +87,10 @@ class Mediafile(Base):
         if not self._mediafile_image:
             self._mediafile_image = ImageManager.open_image(self.mediafile_path)
         return self._mediafile_image
+
+    @property
+    def thumbnail_image(self):
+        pass
 
     def to_dict(self):
         """Return Mediafile model as dictionary."""

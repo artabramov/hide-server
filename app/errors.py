@@ -5,6 +5,7 @@ class E:
     """Class contains error messages."""
 
     INTERNAL_SERVER_ERROR = "Internal server error"
+    BAD_REQUEST = "Bad request"
 
     USER_LOGIN_INVALID = "User login is invalid"
     USER_LOGIN_DENIED = "Login denied due to user role permissions"

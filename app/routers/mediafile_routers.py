@@ -33,24 +33,24 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
                                       "type": "value_invalid", "msg": E.VALUE_INVALID})
     
     try:
+        mediafile = None
         mediafile_filename = await FileManager.file_upload(schema.file, cfg.MEDIAFILE_PATH)
         mediafile = Mediafile(current_user.id, album.id, schema.file.filename, mediafile_filename,
                               mediafile_description=schema.mediafile_description)
-
-        mediafile.thumbnail_filename = await FileManager.file_copy(mediafile.mediafile_path, cfg.THUMBNAIL_PATH)
-        ImageManager.create_thumbnail(mediafile.thumbnail_path)
 
         mediafile_repository = MediafileRepository(session, cache)
         await mediafile_repository.lock_all()
         await mediafile_repository.insert(mediafile)
 
     except Exception as e:
-        pass
-    #     if mediafile_path:
-    #         await FileManager.file_delete(mediafile_path)
+        if mediafile_filename:
+            # we cannot be sure that the mediafile object was successfully created after the file was uploaded,
+            # so we need to calculate mediafile_path here instead using the mediafile.mediafile_path method
+            mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
+            await FileManager.file_delete(mediafile_path)
 
-        # if thumbnail_path:
-        #     await FileManager.file_delete(thumbnail_path)
+        if mediafile and mediafile.thumbnail_filename:
+            await FileManager.file_delete(mediafile.thumbnail_path)
 
         raise e
 
@@ -65,10 +65,14 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
 
 @router.get('/mediafile/{mediafile_id}', tags=['mediafiles'])
 async def select_mediafile(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
-                       current_user=Depends(auth_reader)):
+                           current_user=Depends(auth_reader)):
     """Select mediafile."""
-    mediafile_repository = MediafileRepository(session, cache)
-    mediafile = await mediafile_repository.select(mediafile_id)
+    try:
+        mediafile_repository = MediafileRepository(session, cache)
+        mediafile = await mediafile_repository.select(mediafile_id)
+    except ValueError:
+        raise HTTPException(status_code=404)
+
     return mediafile.to_dict()
 
 

@@ -21,35 +21,33 @@ class MediafileRepository(BaseRepository):
 
     async def _create_thumbnail(self, mediafile: Mediafile):
         """Create thumbnail and return its filename."""
-        thumbnail_filename = await FileManager.file_copy(mediafile.mediafile_path, cfg.THUMBNAIL_PATH)
-        thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
-        ImageManager.create_thumbnail(thumbnail_path)
-        return thumbnail_filename
+        mediafile.thumbnail_filename = await FileManager.file_copy(mediafile.mediafile_path, cfg.THUMBNAIL_PATH)
+        ImageManager.create_thumbnail(mediafile.thumbnail_path)
 
-    async def _insert_colorset(self, mediafile_id: int, im: Image):
+    async def _create_colorset(self, mediafile: Mediafile):
         """Extract and insert colorset."""
-        mediafile_colors = ImageManager.get_colors(im)
-        colorset = Colorset(mediafile_id, **mediafile_colors)
+        mediafile_colors = ImageManager.get_colors(mediafile.mediafile_image)
+        colorset = Colorset(mediafile.id, **mediafile_colors)
         await self.entity_manager.insert(colorset, flush=False)
 
-    async def _insert_metadata(self, mediafile_id: int, im: Image):
+    async def _create_metadata(self, mediafile: Mediafile):
         """Parse and insert metadata."""
-        metadatas = FileManager.get_metadata(im)
+        metadatas = FileManager.get_metadata(mediafile.mediafile_image)
         for meta_key in metadatas:
-            metadata = Metadata(mediafile_id, meta_key, str(metadatas[meta_key]))
+            metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
             await self.entity_manager.insert(metadata, flush=False)
 
-    async def _insert_tags(self, mediafile_id: int, mediafile_description: str=None):
+    async def _create_tags(self, mediafile: Mediafile):
         """Parse description and insert tags."""
-        if mediafile_description:
-            tag_values = TagHelper.get_tags(mediafile_description)
+        if mediafile.mediafile_description:
+            tag_values = TagHelper.get_tags(mediafile.mediafile_description)
             for tag_value in tag_values:
                 tag = await self.entity_manager.select_by(Tag, tag_value__eq=tag_value)
                 if not tag:
                     tag = Tag(tag_value)
                     await self.entity_manager.insert(tag)
 
-                mediafile_tag = MediafileTag(mediafile_id, tag.id)
+                mediafile_tag = MediafileTag(mediafile.id, tag.id)
                 await self.entity_manager.insert(mediafile_tag, flush=False)
 
     async def insert(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
@@ -57,11 +55,15 @@ class MediafileRepository(BaseRepository):
         await self.entity_manager.insert(mediafile)
 
         tasks = [
-            asyncio.create_task(self._insert_colorset(mediafile.id, mediafile.mediafile_image)),
-            asyncio.create_task(self._insert_metadata(mediafile.id, mediafile.mediafile_image)),
-            asyncio.create_task(self._insert_tags(mediafile.id, mediafile.mediafile_description)),
+            asyncio.create_task(self._create_thumbnail(mediafile)),
+            asyncio.create_task(self._create_colorset(mediafile)),
+            asyncio.create_task(self._create_metadata(mediafile)),
+            asyncio.create_task(self._create_tags(mediafile)),
         ]
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+
+        # we should not interrupt tasks executing by using asyncio.FIRST_EXCEPTION mode to avoid
+        # inconsistent state (thumbnail may be created but not deleted if error raises in other tasks)
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
         errors = list(filter(lambda x: x.exception() is not None, done))
         if errors:
             for pending_task in pending:

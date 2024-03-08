@@ -66,7 +66,14 @@ async def validation_exception_handler(request: Request, e: Exception):
     log.error('Request failed, elapsed_time=%s, e=%s.' % (
         "{0:.10f}".format(elapsed_time), str(e)))
 
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=jsonable_encoder({"detail": E.INTERNAL_SERVER_ERROR}),
-    )
+    if e.__class__ in [FileNotFoundError, FileExistsError]:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=jsonable_encoder({"detail": E.BAD_REQUEST}),
+        )
+
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=jsonable_encoder({"detail": E.INTERNAL_SERVER_ERROR}),
+        )
