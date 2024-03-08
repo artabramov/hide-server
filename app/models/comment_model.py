@@ -2,10 +2,10 @@
 
 from sqlalchemy import Column, BigInteger, ForeignKey, String
 from sqlalchemy.orm import relationship
-from app.models.basic_model import Basic
+from app.models.primary_model import Primary
 
 
-class Comment(Basic):
+class Comment(Primary):
     """SQLAlchemy comment model."""
 
     __tablename__ = "comments"

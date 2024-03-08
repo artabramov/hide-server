@@ -1,10 +1,10 @@
-"""User repository."""
+"""Album repository."""
 
-from app.repositories.base_repository import BaseRepository
+from app.repositories.primary_repository import PrimaryRepository
 from app.models.album_model import Album
 
 
-class AlbumRepository(BaseRepository):
+class AlbumRepository(PrimaryRepository):
     """Album repository."""
 
     async def insert(self, album: Album, commit: bool=False) -> Album:
@@ -12,36 +12,33 @@ class AlbumRepository(BaseRepository):
         await self.entity_manager.insert(album, commit=commit)
         return album
 
-    async def select(self, album_id: int) -> Album:
+    async def select(self, album_id: int) -> Album | None:
         """Select album."""
         album = await self.cache_manager.get(Album, album_id)
         if not album:
             album = await self.entity_manager.select(Album, album_id)
 
-        if not album:
-            raise ValueError
+        if album:
+            await self.cache_manager.set(album)
+            return album
 
-        await self.cache_manager.set(album)
-        return album
-
-    async def update(self, album: Album, commit: bool=False) -> Album:
+    async def update(self, album: Album, commit: bool=False):
         """Update album."""
         await self.entity_manager.update(album, commit=commit)
         await self.cache_manager.delete(album)
-        return album
 
-    async def delete(self, album: Album, commit: bool=False) -> None:
+    async def delete(self, album: Album, commit: bool=False):
         """Delete album."""
         await self.entity_manager.delete(album, commit=commit)
         await self.cache_manager.delete(album)
 
-    async def select_all(self, **kwargs):
+    async def select_all(self, **kwargs) -> list:
         """Select albums."""
         albums = await self.entity_manager.select_all(Album, **kwargs)
         for album in albums:
             await self.cache_manager.set(album)
         return albums
 
-    async def count_all(self, **kwargs):
+    async def count_all(self, **kwargs) -> int:
         """Count albums."""
         return await self.entity_manager.count_all(Album, **kwargs)

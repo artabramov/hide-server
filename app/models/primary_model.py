@@ -1,13 +1,13 @@
-"""Basic SQLAlchemy model."""
+"""SQLAlchemy primary model."""
 
 from time import time
-from sqlalchemy import Column, Integer, BigInteger
+from sqlalchemy import Integer, BigInteger
 from sqlalchemy.orm import mapped_column
 from app.session import Base
 
 
-class Basic(Base):
-    """Basic SQLAlchemy model."""
+class Primary(Base):
+    """SQLAlchemy primary model."""
 
     __abstract__ = True
 

@@ -42,7 +42,7 @@ class Mediafile(Base):
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
     mediafile_user = relationship("User", back_populates="mediafile", lazy="joined")
-    mediafile_album = relationship("Album", back_populates="mediafile", lazy="joined")
+    mediafile_album = relationship("Album", back_populates="album_mediafile", lazy="joined")
     mediafile_metadata = relationship("Metadata", back_populates="mediafile", lazy="joined", cascade="all,delete")
     mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
     mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")

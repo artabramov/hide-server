@@ -8,7 +8,7 @@ from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
 from app.helpers.tag_helper import TagHelper
 from PIL import Image
-from app.repositories.base_repository import BaseRepository
+from app.repositories.primary_repository import PrimaryRepository
 from app.config import get_cfg
 import asyncio
 import os
@@ -16,7 +16,7 @@ import os
 cfg = get_cfg()
 
 
-class MediafileRepository(BaseRepository):
+class MediafileRepository(PrimaryRepository):
     """Mediafile repository."""
 
     async def _create_thumbnail(self, mediafile: Mediafile):

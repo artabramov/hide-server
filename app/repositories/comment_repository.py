@@ -1,10 +1,10 @@
 """Comment repository."""
 
-from app.repositories.base_repository import BaseRepository
+from app.repositories.primary_repository import PrimaryRepository
 from app.models.comment_model import Comment
 
 
-class CommentRepository(BaseRepository):
+class CommentRepository(PrimaryRepository):
     """Comment repository."""
 
     async def insert(self, comment: Comment, commit: bool=False) -> Comment:

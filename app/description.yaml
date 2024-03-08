@@ -1,0 +1,8 @@
+## Roles and permissions
+| action                       | denied  | reader  | writer  | editor  | admin   |
+| ---------------------------- | ------- | ------- | ------- | ------- | ------- |
+| insert album                 | no      | no      | no      | **yes** | **yes** |
+| select album                 | no      | **yes** | **yes** | **yes** | **yes** |
+| update album                 | no      | no      | no      | **yes** | **yes** |
+| delete album                 | no      | no      | no      | **yes** | **yes** |
+| albums list                  | no      | **yes** | **yes** | **yes** | **yes** |

@@ -12,9 +12,10 @@ from app.config import get_cfg
 from app.logger import get_log
 from uuid import uuid4
 import time
-from app.session import Base, async_engine
+from app.session import Base, sessionmanager
 from app.errors import E
 from fastapi.staticfiles import StaticFiles
+import os
 
 
 cfg = get_cfg()
@@ -24,12 +25,15 @@ log = get_log()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create SQLAlchemy tables."""
-    async with async_engine.begin() as conn:
+    async with sessionmanager.async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
 
 
-app = FastAPI(lifespan=lifespan, title=cfg.APP_TITLE, summary=cfg.APP_SUMMARY, version=cfg.APP_VERSION)
+with open(os.path.join(cfg.APP_PATH, "description.yaml"), "r") as file:
+    description = file.read()
+
+app = FastAPI(lifespan=lifespan, title=cfg.APP_TITLE, description=description, version=cfg.APP_VERSION)
 app.mount(cfg.MFA_PREFIX, StaticFiles(directory=cfg.MFA_PATH, html=False), name=cfg.MFA_PATH)
 app.mount(cfg.USERPIC_PREFIX, StaticFiles(directory=cfg.USERPIC_PATH, html=False), name=cfg.USERPIC_PATH)
 app.include_router(hello_routers.router, prefix=cfg.APP_PREFIX)
