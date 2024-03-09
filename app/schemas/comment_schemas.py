@@ -20,7 +20,7 @@ class CommentSchema(BaseModel):
 class CommentInsertSchema(BaseModel):
     """Pydantic comment insertion schema."""
 
-    mediafile_id: int = Query(ge=1)
+    mediafile_id: int
     comment_content: str = Query(min_length=1, max_length=512)
 
 

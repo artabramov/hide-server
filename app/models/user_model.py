@@ -47,7 +47,7 @@ class User(Base, FernetMixin):
 
     user_album = relationship("Album", back_populates="album_user", lazy="noload")
     mediafile = relationship("Mediafile", back_populates="mediafile_user", lazy="noload")
-    comment = relationship("Comment", back_populates="comment_user", lazy="noload")
+    user_comment = relationship("Comment", back_populates="comment_user", lazy="noload")
 
     def __init__(self, user_login: str, user_pass: str, first_name: str, last_name: str, mfa_key: str, jti: str):
         """Init user SQLAlchemy object."""

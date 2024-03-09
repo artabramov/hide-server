@@ -18,17 +18,19 @@ router = APIRouter()
 async def insert_comment(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(CommentInsertSchema),
                          current_user=Depends(auth_writer)):
     """Insert comment."""
-    try:
-        mediafile_repository = MediafileRepository(session, cache)
-        mediafile = await mediafile_repository.select(schema.mediafile_id)
-    except ValueError:
+    mediafile_repository = MediafileRepository(session, cache)
+    mediafile = await mediafile_repository.select(schema.mediafile_id)
+    if not mediafile:
         raise RequestValidationError({"loc": ["query", "mediafile_id"], "input": schema.mediafile_id,
                                       "type": "value_invalid", "msg": E.VALUE_INVALID})
 
+    elif mediafile.mediafile_album.is_locked:
+        raise RequestValidationError({"loc": ["query", "mediafile_id"], "input": schema.mediafile_id,
+                                      "type": "value_locked", "msg": E.VALUE_LOCKED})
+
     comment_repository = CommentRepository(session, cache)
     await comment_repository.lock_all()
-    comment = Comment(current_user.id, mediafile.id, schema.comment_content)
-    comment = await comment_repository.insert(comment)
+    comment = await comment_repository.insert(current_user.id, mediafile.id, schema.comment_content)
 
     mediafile.comments_count = await comment_repository.count_all(mediafile_id__eq=mediafile.id)
     await mediafile_repository.update(mediafile)
@@ -41,10 +43,9 @@ async def insert_comment(session=Depends(get_session), cache=Depends(get_cache),
 async def select_comment(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(CommentSelectSchema),
                          current_user=Depends(auth_reader)):
     """Select comment."""
-    try:
-        comment_repository = CommentRepository(session, cache)
-        comment = await comment_repository.select(schema.comment_id)
-    except ValueError:
+    comment_repository = CommentRepository(session, cache)
+    comment = await comment_repository.select(schema.comment_id)
+    if not comment:
         raise HTTPException(status_code=404)
 
     return comment.to_dict()
@@ -54,10 +55,9 @@ async def select_comment(session=Depends(get_session), cache=Depends(get_cache),
 async def update_comment(session=Depends(get_session), cache=Depends(get_cache), schema=Depends(CommentUpdateSchema),
                          current_user=Depends(auth_editor)):
     """Update comment."""
-    try:
-        comment_repository = CommentRepository(session, cache)
-        comment = await comment_repository.select(schema.comment_id)
-    except ValueError:
+    comment_repository = CommentRepository(session, cache)
+    comment = await comment_repository.select(schema.comment_id)
+    if not comment:
         raise HTTPException(status_code=404)
     
     if comment.user_id != current_user.id:
@@ -65,7 +65,6 @@ async def update_comment(session=Depends(get_session), cache=Depends(get_cache),
 
     comment.comment_content = schema.comment_content
     await comment_repository.update(comment)
-
     return {}
 
 

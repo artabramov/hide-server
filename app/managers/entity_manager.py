@@ -8,6 +8,7 @@ from time import time
 from app.decorators.timed_deco import timed
 
 _ORDER_BY, _ORDER = "order_by", "order"
+_ID = "id"
 _ASC, _DESC = "asc", "desc"
 _OFFSET, _LIMIT = "offset", "limit"
 _SQLALCHEMY_RESERVED = [_ORDER_BY, _ORDER, _OFFSET, _LIMIT ]
@@ -22,6 +23,9 @@ _SQLALCHEMY_OPERATORS = {
     "like": "like",
     "ilike": "ilike",
 }
+
+SELECT_ALL_BUNCH_LIMIT = 200
+DELETE_ALL_BUNCH_SIZE = 2
 
 
 class EntityManager:
@@ -88,7 +92,7 @@ class EntityManager:
     async def count_all(self, cls: object, **kwargs) -> int:
         """Count SQLAlchemy objects in Postgres database."""
         async_result = await self.session.execute(
-            select(func.count(getattr(cls, "id"))).where(*self._where(cls, **kwargs)))
+            select(func.count(getattr(cls, _ID))).where(*self._where(cls, **kwargs)))
         return async_result.unique().scalars().one_or_none() or 0
 
     @timed
@@ -97,6 +101,14 @@ class EntityManager:
         async_result = await self.session.execute(
             select(func.sum(getattr(cls, column))).where(*self._where(cls, **kwargs)))
         return async_result.unique().scalars().one_or_none() or 0
+
+    @timed
+    async def delete_all(self, cls: object, commit: bool=False, **kwargs):
+        kwargs = kwargs | {_ORDER_BY: _ID, _ORDER: _ASC, _OFFSET: 0, _LIMIT: 100}
+        while objs := await self.select_all(cls, **kwargs):
+            kwargs[_OFFSET] += kwargs[_LIMIT]
+            for obj in objs:
+                await self.delete(obj, commit=commit)
 
     @timed
     async def lock_all(self, cls: object) -> None:

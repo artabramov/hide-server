@@ -43,7 +43,7 @@ class Mediafile(Primary):
     mediafile_colorset = relationship("Colorset", back_populates="mediafile", lazy="joined", uselist=False, cascade="all,delete")
     mediafile_tags = relationship("Tag", secondary=MediafileTag.__table__, back_populates="mediafiles", lazy="joined")
 
-    mediafile_comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload")
+    mediafile_comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload", cascade="all,delete")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, mediafile_filename: str,
                  thumbnail_filename: str=None, mediafile_description: str = None):

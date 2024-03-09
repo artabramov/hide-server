@@ -5,6 +5,7 @@ from app.cache import get_cache
 from app.schemas.mediafile_schemas import MediafileSchema, MediafileInsertSchema, MediafileUpdateSchema, MediafilesListSchema
 from app.repositories.album_repository import AlbumRepository
 from app.repositories.mediafile_repository import MediafileRepository
+from app.repositories.comment_repository import CommentRepository
 from app.auth import auth_admin, auth_editor, auth_writer, auth_reader
 from app.managers.file_manager import FileManager
 from app.models.mediafile_model import Mediafile
@@ -105,6 +106,9 @@ async def delete_mediafile(mediafile_id: int, session=Depends(get_session), cach
         raise HTTPException(status_code=404)
 
     await mediafile_repository.delete(mediafile)
+    
+    comment_repository = CommentRepository(session, cache)
+    await comment_repository.delete_all(mediafile_id__eq=mediafile.id)
 
     album_repository = AlbumRepository(session, cache)
     mediafile.mediafile_album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=mediafile.mediafile_album.id, id__not=mediafile.id)
