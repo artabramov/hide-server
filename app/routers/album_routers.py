@@ -14,8 +14,8 @@ async def insert_album(session=Depends(get_session), cache=Depends(get_cache), s
                        current_user=Depends(auth_editor)):
     """Insert album."""
     album_repository = AlbumRepository(session, cache)
-    album = Album(current_user.id, schema.is_locked, schema.album_name, album_description=schema.album_description)
-    album = await album_repository.insert(album, commit=True)
+    album = await album_repository.insert(current_user.id, schema.is_locked, schema.album_name,
+                                          album_description=schema.album_description, commit=True)
     return {
         "album_id": album.id,
     }

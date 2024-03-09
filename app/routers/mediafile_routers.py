@@ -33,33 +33,14 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
         raise RequestValidationError({"loc": ["query", "album_id"], "input": schema.album_id,
                                       "type": "value_locked", "msg": E.VALUE_LOCKED})
 
-    try:
-        mediafile_filename = None
-        mediafile_filename = await FileManager.file_upload(schema.file, cfg.MEDIAFILE_PATH)
-
-        mediafile = None
-        mediafile = Mediafile(current_user.id, album.id, schema.file.filename, mediafile_filename,
-                              mediafile_description=schema.mediafile_description)
-
-        mediafile_repository = MediafileRepository(session, cache)
-        await mediafile_repository.lock_all()
-        await mediafile_repository.insert(mediafile)
-
-    except Exception:
-        if mediafile_filename:
-            # we cannot be sure that the mediafile object was successfully created after the file was uploaded,
-            # so we need to calculate mediafile_path here instead using the mediafile.mediafile_path method
-            mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
-            await FileManager.file_delete(mediafile_path)
-
-        if mediafile and mediafile.thumbnail_filename:
-            await FileManager.file_delete(mediafile.thumbnail_path)
-
-        raise
+    mediafile_repository = MediafileRepository(session, cache)
+    await mediafile_repository.lock_all()
+    mediafile = await mediafile_repository.insert(schema.file, current_user.id, album.id,
+                                                  mediafile_description=schema.mediafile_description)
 
     album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=album.id)
     album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
-    await album_repository.update(album, commit=True)
+    await album_repository.update(album)
     return {
         "mediafile_id": mediafile.id,
     }
@@ -111,8 +92,6 @@ async def update_mediafile(mediafile_id: int, session = Depends(get_session), ca
         album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=album.id)
         album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
         await album_repository.update(album)
-    
-    await mediafile_repository.commit()
     return {}
 
 
@@ -132,11 +111,6 @@ async def delete_mediafile(mediafile_id: int, session=Depends(get_session), cach
     mediafile.mediafile_album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=mediafile.mediafile_album.id, id__not=mediafile.id)
     await album_repository.update(mediafile.mediafile_album)
 
-    await FileManager.file_delete(mediafile.mediafile_path)
-    if mediafile.thumbnail_filename:
-        await FileManager.file_delete(mediafile.thumbnail_path)
-
-    await mediafile_repository.commit()
     return {}
 
 @router.get('/mediafiles', tags=['mediafiles'])

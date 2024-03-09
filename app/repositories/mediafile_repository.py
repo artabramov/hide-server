@@ -8,6 +8,8 @@ from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
 from app.helpers.tag_helper import TagHelper
 from app.repositories.primary_repository import PrimaryRepository
+from fastapi import UploadFile
+import os
 from app.config import get_cfg
 import asyncio
 
@@ -58,25 +60,39 @@ class MediafileRepository(PrimaryRepository):
             if not tag_used:
                 await self.entity_manager.delete(tag)
 
-    async def insert(self, mediafile: Mediafile, commit: bool=False) -> Mediafile:
-        """Insert mediafile."""
-        await self.entity_manager.insert(mediafile)
+    async def insert(self, file: UploadFile, user_id: int, album_id: int, mediafile_description: str=None,
+                     commit: bool=False) -> Mediafile:
+        """Upload mediafile."""
+        mediafile_filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
+        mediafile = None
+        try:
+            mediafile = Mediafile(user_id, album_id, file.filename, mediafile_filename,
+                                  mediafile_description=mediafile_description)
+            await self.entity_manager.insert(mediafile)
 
-        tasks = [
-            asyncio.create_task(self._create_thumbnail(mediafile)),
-            asyncio.create_task(self._insert_colorset(mediafile)),
-            asyncio.create_task(self._insert_metadata(mediafile)),
-            asyncio.create_task(self._insert_tags(mediafile)),
-        ]
+            tasks = [
+                asyncio.create_task(self._create_thumbnail(mediafile)),
+                asyncio.create_task(self._insert_colorset(mediafile)),
+                asyncio.create_task(self._insert_metadata(mediafile)),
+                asyncio.create_task(self._insert_tags(mediafile)),
+            ]
 
-        # we should not interrupt tasks executing by using asyncio.FIRST_EXCEPTION mode to avoid
-        # inconsistent state (thumbnail may be created but not deleted if error raises in other tasks)
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
-        errors = list(filter(lambda x: x.exception() is not None, done))
-        if errors:
-            for pending_task in pending:
-                pending_task.cancel()
-            raise errors[0].exception()
+            # we should not interrupt the tasks by using asyncio.FIRST_EXCEPTION mode to avoid
+            # inconsistent state (thumbnail may be created but not deleted when error raises)
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
+            errors = list(filter(lambda x: x.exception() is not None, done))
+            if errors:
+                for pending_task in pending:
+                    pending_task.cancel()
+                raise errors[0].exception()
+
+        except Exception:
+            if mediafile:
+                await FileManager.file_delete(mediafile.mediafile_path)
+            if mediafile.thumbnail_filename:
+                await FileManager.file_delete(mediafile.thumbnail_path)
+
+            raise
 
         if commit:
             await self.entity_manager.commit()
@@ -106,6 +122,9 @@ class MediafileRepository(PrimaryRepository):
 
     async def delete(self, mediafile: Mediafile, commit: bool=False):
         """Delete mediafile."""
+        await FileManager.file_delete(mediafile.mediafile_path)
+        await FileManager.file_delete(mediafile.thumbnail_path)
+
         await self.entity_manager.delete(mediafile)
         await self._delete_tags(mediafile)
 

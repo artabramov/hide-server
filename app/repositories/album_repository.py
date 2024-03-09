@@ -7,8 +7,10 @@ from app.models.album_model import Album
 class AlbumRepository(PrimaryRepository):
     """Album repository."""
 
-    async def insert(self, album: Album, commit: bool=False) -> Album:
+    async def insert(self, user_id: int, is_locked: bool, album_name: str,
+                     album_description: str=None, commit: bool=False) -> Album:
         """Insert album."""
+        album = Album(user_id, is_locked, album_name, album_description=album_description)
         await self.entity_manager.insert(album, commit=commit)
         return album
 
