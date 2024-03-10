@@ -88,6 +88,12 @@ class Mediafile(Primary):
 
             raise
 
+    def delete(self):
+        """Delete original file and thumbnail."""
+        for path in self.mediafile_path, self.thumbnail_path:
+            thread = Thread(target=asyncio.run, args=(FileManager.file_delete(path), ))
+            thread.start()  
+
     @property
     def mediafile_path(self):
         """Mediafile path."""
@@ -146,6 +152,4 @@ class Mediafile(Primary):
 
 @event.listens_for(Mediafile, 'after_delete')
 def after_delete(mapper, connection, mediafile):
-    for path in mediafile.mediafile_path, mediafile.thumbnail_path:
-        thread = Thread(target=asyncio.run, args=(FileManager.file_delete(path),))
-        thread.start()    
+    mediafile.delete()  
