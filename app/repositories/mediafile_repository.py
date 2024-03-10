@@ -19,25 +19,24 @@ cfg = get_cfg()
 class MediafileRepository(PrimaryRepository):
     """Mediafile repository."""
 
-    async def _create_thumbnail(self, mediafile: Mediafile):
+    async def _resize_thumbnail(self, mediafile: Mediafile):
         """Create thumbnail."""
-        mediafile.thumbnail_filename = await FileManager.file_copy(mediafile.mediafile_path, cfg.THUMBNAIL_PATH)
         ImageManager.create_thumbnail(mediafile.thumbnail_path)
 
-    async def _insert_colorset(self, mediafile: Mediafile):
+    async def _create_colorset(self, mediafile: Mediafile):
         """Extract and insert colorset."""
         mediafile_colors = ImageManager.get_colors(mediafile.mediafile_image)
         colorset = Colorset(mediafile.id, **mediafile_colors)
         await self.entity_manager.insert(colorset, flush=False)
 
-    async def _insert_metadata(self, mediafile: Mediafile):
+    async def _create_metadata(self, mediafile: Mediafile):
         """Parse and insert metadata."""
         metadatas = FileManager.get_metadata(mediafile.mediafile_image)
         for meta_key in metadatas:
             metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
             await self.entity_manager.insert(metadata, flush=False)
 
-    async def _insert_tags(self, mediafile: Mediafile):
+    async def _create_tags(self, mediafile: Mediafile):
         """Parse description and insert tags."""
         if mediafile.mediafile_description:
             tag_values = TagHelper.get_tags(mediafile.mediafile_description)
@@ -63,18 +62,20 @@ class MediafileRepository(PrimaryRepository):
     async def insert(self, file: UploadFile, user_id: int, album_id: int, mediafile_description: str=None,
                      commit: bool=False) -> Mediafile:
         """Upload mediafile."""
-        mediafile_filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
-        mediafile = None
+        mediafile_path, thumbnail_path = None, None
+        mediafile_filename, mediafile_path = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
+        thumbnail_filename, thumbnail_path = await FileManager.file_copy(mediafile_path, cfg.THUMBNAIL_PATH)
+
         try:
-            mediafile = Mediafile(user_id, album_id, file.filename, mediafile_filename,
+            mediafile = Mediafile(user_id, album_id, file.filename, mediafile_filename, thumbnail_filename,
                                   mediafile_description=mediafile_description)
             await self.entity_manager.insert(mediafile)
 
             tasks = [
-                asyncio.create_task(self._create_thumbnail(mediafile)),
-                asyncio.create_task(self._insert_colorset(mediafile)),
-                asyncio.create_task(self._insert_metadata(mediafile)),
-                asyncio.create_task(self._insert_tags(mediafile)),
+                asyncio.create_task(self._resize_thumbnail(mediafile)),
+                asyncio.create_task(self._create_colorset(mediafile)),
+                asyncio.create_task(self._create_metadata(mediafile)),
+                asyncio.create_task(self._create_tags(mediafile)),
             ]
 
             # we should not interrupt the tasks by using asyncio.FIRST_EXCEPTION mode to avoid
@@ -87,10 +88,11 @@ class MediafileRepository(PrimaryRepository):
                 raise errors[0].exception()
 
         except Exception:
-            if mediafile:
-                await FileManager.file_delete(mediafile.mediafile_path)
-            if mediafile.thumbnail_filename:
-                await FileManager.file_delete(mediafile.thumbnail_path)
+            if mediafile_path:
+                await FileManager.file_delete(mediafile_path)
+
+            if thumbnail_path:
+                await FileManager.file_delete(thumbnail_path)
 
             raise
 

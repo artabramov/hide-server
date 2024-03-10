@@ -35,7 +35,7 @@ class Mediafile(Primary):
 
     original_filename = Column(String(512), nullable=False, index=True)
     mediafile_filename = Column(String(512), nullable=False, unique=True)
-    thumbnail_filename = Column(String(512), nullable=True, unique=True)
+    thumbnail_filename = Column(String(512), nullable=False, unique=True)
     mediafile_description = Column(String(512), index=False, nullable=True)
     comments_count = Column(Integer, index=True, nullable=False, default=0)
 
@@ -48,7 +48,7 @@ class Mediafile(Primary):
     mediafile_comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload", cascade="all,delete")
 
     def __init__(self, user_id: int, album_id: int, original_filename: str, mediafile_filename: str,
-                 thumbnail_filename: str=None, mediafile_description: str = None):
+                 thumbnail_filename: str, mediafile_description: str = None):
         """Init model."""
         self.user_id = user_id
         self.album_id = album_id
@@ -119,11 +119,6 @@ class Mediafile(Primary):
             "mediafile_colorset": self.mediafile_colorset.to_dict() if self.mediafile_colorset else {},
             "mediafile_tags": [x.tag_value for x in self.mediafile_tags],
         }
-
-
-@event.listens_for(Mediafile, 'before_insert')
-def before_insert(mapper, connection, mediafile):
-    a = 1
 
 
 @event.listens_for(Mediafile, 'after_delete')

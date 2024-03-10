@@ -137,7 +137,7 @@ class FileManager:
         fd_dst = handle_dst.fileno()
 
         await aiofiles.os.sendfile(fd_dst, fd_src, 0, n_bytes)
-        return dst_filename
+        return dst_filename, dst_path
 
         # shutil.copyfile(src_path, dst_path)
         # log.debug('Copy file, src_path=%s, dst_path=%s' % (src_path, dst_path))
@@ -164,7 +164,7 @@ class FileManager:
             while content := await file.read(AIOFILES_CHUNK_SIZE):
                 await fn.write(content)
 
-        return filename
+        return filename, path
 
     @staticmethod
     async def file_delete(path: str) -> None:
