@@ -232,7 +232,8 @@ class UserRepository:
             raise RequestValidationError({"loc": ["file", "file"], "input": file.content_type,
                                           "type": "file_mime", "msg": E.FILE_MIME_INVALID})
 
-        userpic, userpic_path = await FileManager.file_upload(file, cfg.USERPIC_PATH)
+        userpic = await FileManager.file_upload(file, cfg.USERPIC_PATH)
+        userpic_path = os.path.join(cfg.USERPIC_PATH, userpic)
 
         original_image = Image.open(userpic_path)
         userpic_image = ImageOps.fit(original_image, tuple([cfg.USERPIC_WIDTH, cfg.USERPIC_HEIGHT]), Image.LANCZOS)

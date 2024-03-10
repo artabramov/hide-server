@@ -9,6 +9,7 @@ from app.config import get_cfg
 import os
 from app.models.primary_model import Primary
 from threading import Thread
+from fastapi import UploadFile
 import asyncio
 
 cfg = get_cfg()
@@ -47,23 +48,45 @@ class Mediafile(Primary):
 
     mediafile_comment = relationship("Comment", back_populates="comment_mediafile", lazy="noload", cascade="all,delete")
 
-    def __init__(self, user_id: int, album_id: int, original_filename: str, mediafile_filename: str,
-                 thumbnail_filename: str, mediafile_description: str = None):
+    def __init__(self, user_id: int, album_id: int, mediafile_description: str = None):
         """Init model."""
         self.user_id = user_id
         self.album_id = album_id
-        self.original_filename = original_filename
-        self.mediafile_filename = mediafile_filename
-        self.thumbnail_filename = thumbnail_filename
+        self.original_filename = None
+        self.mediafile_filename = None
+        self.thumbnail_filename = None
         self.mediafile_description = mediafile_description
         self.comments_count = 0
 
-        self.mimetype = FileManager.get_mimetype(self.mediafile_path)
-        self.filesize = FileManager.get_filesize(self.mediafile_path)
-        self.width = self.mediafile_image.width
-        self.height = self.mediafile_image.height
-        self.format = self.mediafile_image.format
-        self.mode = self.mediafile_image.mode
+        self.mimetype = None
+        self.filesize = None
+        self.width = None
+        self.height = None
+        self.format = None
+        self.mode = None
+
+    async def upload(self, file: UploadFile):
+        """Upload original file, create thumbnail, colorset, metadata and tags."""
+        try:
+            self.original_filename = file.filename
+            self.mediafile_filename = await FileManager.file_upload(file, cfg.MEDIAFILE_PATH)
+            self.thumbnail_filename = await FileManager.file_copy(self.mediafile_path, cfg.THUMBNAIL_PATH)
+
+            self.mimetype = FileManager.get_mimetype(self.mediafile_path)
+            self.filesize = FileManager.get_filesize(self.mediafile_path)
+            self.width = self.mediafile_image.width
+            self.height = self.mediafile_image.height
+            self.format = self.mediafile_image.format
+            self.mode = self.mediafile_image.mode
+
+        except Exception:
+            if self.mediafile_path:
+                await FileManager.file_delete(self.mediafile_path)
+
+            if self.thumbnail_path:
+                await FileManager.file_delete(self.thumbnail_path)
+
+            raise
 
     @property
     def mediafile_path(self):
