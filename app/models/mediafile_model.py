@@ -1,6 +1,6 @@
 """SQLAlchemy mediafile models."""
 
-from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey
+from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, event
 from app.managers.file_manager import FileManager
 from app.managers.image_manager import ImageManager
 from sqlalchemy.orm import relationship
@@ -8,6 +8,8 @@ from app.models.tag_model import MediafileTag
 from app.config import get_cfg
 import os
 from app.models.primary_model import Primary
+from threading import Thread
+import asyncio
 
 cfg = get_cfg()
 
@@ -117,3 +119,15 @@ class Mediafile(Primary):
             "mediafile_colorset": self.mediafile_colorset.to_dict() if self.mediafile_colorset else {},
             "mediafile_tags": [x.tag_value for x in self.mediafile_tags],
         }
+
+
+@event.listens_for(Mediafile, 'before_insert')
+def before_insert(mapper, connection, mediafile):
+    a = 1
+
+
+@event.listens_for(Mediafile, 'after_delete')
+def after_delete(mapper, connection, mediafile):
+    for path in mediafile.mediafile_path, mediafile.thumbnail_path:
+        thread = Thread(target=asyncio.run, args=(FileManager.file_delete(path),))
+        thread.start()    

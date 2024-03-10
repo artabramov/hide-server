@@ -122,8 +122,8 @@ class MediafileRepository(PrimaryRepository):
 
     async def delete(self, mediafile: Mediafile, commit: bool=False):
         """Delete mediafile."""
-        await FileManager.file_delete(mediafile.mediafile_path)
-        await FileManager.file_delete(mediafile.thumbnail_path)
+        # await FileManager.file_delete(mediafile.mediafile_path)
+        # await FileManager.file_delete(mediafile.thumbnail_path)
 
         await self.entity_manager.delete(mediafile)
         await self._delete_tags(mediafile)
