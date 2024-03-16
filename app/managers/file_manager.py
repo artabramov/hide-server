@@ -119,10 +119,10 @@ class FileManager:
     #     return sorted(files)
 
     @staticmethod
-    async def file_copy(src_path: str, dst_dir: str) -> None:
+    async def file_copy(src_path: str, dst_path: str) -> None:
         """Copy file."""
-        dst_filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(src_path))
-        dst_path = os.path.join(dst_dir, dst_filename)
+        # dst_filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(src_path))
+        # dst_path = os.path.join(dst_dir, dst_filename)
 
         # create file objects for the source and destination
         handle_src = await aiofiles.open(src_path, mode="r")
@@ -137,7 +137,6 @@ class FileManager:
         fd_dst = handle_dst.fileno()
 
         await aiofiles.os.sendfile(fd_dst, fd_src, 0, n_bytes)
-        return dst_filename
 
         # shutil.copyfile(src_path, dst_path)
         # log.debug('Copy file, src_path=%s, dst_path=%s' % (src_path, dst_path))
@@ -155,16 +154,14 @@ class FileManager:
     #     log.debug('Execute command, cmd=%s' % cmd)
 
     @staticmethod
-    async def file_upload(file: object, dst_dir: str) -> str:
+    async def file_upload(file: object, path: str) -> str:
         """Asynchronously upload a file under a unique filename and return the filename."""
-        filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(file.filename))
-        path = os.path.join(dst_dir, filename)
+        # filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(file.filename))
+        # path = os.path.join(dst_dir, filename)
 
         async with aiofiles.open(path, "wb") as fn:
             while content := await file.read(AIOFILES_CHUNK_SIZE):
                 await fn.write(content)
-
-        return filename
 
     @staticmethod
     async def file_delete(path: str) -> None:
