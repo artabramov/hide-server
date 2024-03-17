@@ -39,9 +39,14 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
     mediafile = await mediafile_repository.insert(schema.file, current_user.id, album.id,
                                                   mediafile_description=schema.mediafile_description)
 
-    album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=album.id)
-    album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
-    await album_repository.update(album)
+    try:
+        album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=album.id)
+        album.mediafiles_size = await mediafile_repository.sum_all("filesize", album_id__eq=album.id)
+        await album_repository.update(album)
+    except Exception:
+        await mediafile_repository.delete(mediafile)
+        raise
+
     return {
         "mediafile_id": mediafile.id,
     }

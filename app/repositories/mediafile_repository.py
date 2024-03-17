@@ -31,13 +31,10 @@ class MediafileRepository(PrimaryRepository):
     async def _get_filesize(self, path: str) -> int:
         """Get file size."""
         return FileManager.get_filesize(path)
-    
-    async def _get_image(self, path: str) -> Image:
-        """Open image."""
-        return ImageManager.open_image(path)
 
     async def _create_thumbnail(self, mediafile: Mediafile):
         """Create thumbnail."""
+        await FileManager.file_copy(mediafile.mediafile_path, mediafile.thumbnail_path)
         ImageManager.create_thumbnail(mediafile.thumbnail_path)
 
     async def _create_colorset(self, mediafile: Mediafile):
@@ -68,73 +65,58 @@ class MediafileRepository(PrimaryRepository):
 
     async def _delete_tags(self, mediafile: Mediafile):
         """Delete mediafile tags."""
-        for tag in mediafile.mediafile_tags:
-            mediafile_tag = await self.entity_manager.select_by(MediafileTag, mediafile_id__eq=mediafile.id, tag_id__eq=tag.id)
-            await self.entity_manager.delete(mediafile_tag)
+        # check for __dict__ is mandatory for cases when relationship is not loaded yet
+        if "mediafile_tags" in mediafile.__dict__:
+            for tag in mediafile.mediafile_tags:
+                mediafile_tag = await self.entity_manager.select_by(MediafileTag, mediafile_id__eq=mediafile.id, tag_id__eq=tag.id)
+                await self.entity_manager.delete(mediafile_tag)
 
-            tag_used = await self.entity_manager.count_all(MediafileTag, mediafile_id__not=mediafile.id, tag_id__eq=tag.id)
-            if not tag_used:
-                await self.entity_manager.delete(tag)
+                tag_used = await self.entity_manager.count_all(MediafileTag, mediafile_id__not=mediafile.id, tag_id__eq=tag.id)
+                if not tag_used:
+                    await self.entity_manager.delete(tag)
 
     async def insert(self, file: UploadFile, user_id: int, album_id: int, mediafile_description: str=None,
                      commit: bool=False) -> Mediafile:
         """Upload mediafile."""
-        # upload file
-        mediafile_extension = FileManager.get_extension(file.filename)
-        mediafile_filename = str(uuid.uuid4()) + mediafile_extension
-        mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
-        await FileManager.file_upload(file, mediafile_path)
+        try:
+            mediafile_path, thumbnail_path = None, None
 
-        # get file properties
-        funcs = [self._get_mimetype, self._get_filesize, self._get_image]
-        tasks = [asyncio.create_task(func(mediafile_path)) for func in funcs]
-        mimetype, filesize, im = await asyncio.gather(*tasks)
+            # upload file
+            mediafile_extension = FileManager.get_extension(file.filename)
+            mediafile_filename = str(uuid.uuid4()) + mediafile_extension
+            mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
+            await FileManager.file_upload(file, mediafile_path)
 
-        # will create thumbnail file later in tasks queue
-        thumbnail_filename = str(uuid.uuid4()) + FileManager.get_extension(mediafile_path)
-        thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
+            # get file properties
+            funcs = [self._get_mimetype, self._get_filesize]
+            tasks = [asyncio.create_task(func(mediafile_path)) for func in funcs]
+            mimetype, filesize = await asyncio.gather(*tasks)
 
-        # create mediafile
-        mediafile = Mediafile(user_id, album_id, file.filename, mediafile_filename, thumbnail_filename, mimetype,
-                              filesize, im.width, im.height, im.format, im.mode,
-                              mediafile_description=mediafile_description)
-        await self.entity_manager.insert(mediafile)
+            # will create thumbnail later in async task
+            thumbnail_filename = str(uuid.uuid4()) + mediafile_extension
+            thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
 
-        # try:
-        #     await FileManager.file_copy(mediafile_path, thumbnail_path)
+            # create mediafile
+            mediafile = Mediafile(user_id, album_id, file.filename, mediafile_filename, thumbnail_filename,
+                                mimetype, filesize, mediafile_description=mediafile_description)
+            await self.entity_manager.insert(mediafile)
 
-        # except Exception:
-        #     if mediafile_filename:
-        #         mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
-        #         await FileManager.file_delete(mediafile_path)
+            # create related data
+            funcs = [self._create_thumbnail, self._create_colorset, self._create_metadata, self._create_tags]
+            tasks = [asyncio.create_task(func(mediafile)) for func in funcs]
+            await asyncio.gather(*tasks)
 
-        #     if thumbnail_filename:
-        #         thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
-        #         await FileManager.file_delete(thumbnail_path)
+        except Exception:
+            if mediafile_path:
+                await FileManager.file_delete(mediafile_path)
 
-        #     raise
+            if thumbnail_path:
+                await FileManager.file_delete(thumbnail_path)
 
-        # mediafile = Mediafile(user_id, album_id,  mediafile_description=mediafile_description)
-        # await self.entity_manager.insert(mediafile)
+            raise
 
-        # tasks = [
-        #     asyncio.create_task(self._create_thumbnail(mediafile)),
-        #     asyncio.create_task(self._create_colorset(mediafile)),
-        #     asyncio.create_task(self._create_metadata(mediafile)),
-        #     asyncio.create_task(self._create_tags(mediafile)),
-        # ]
-
-        # we should not interrupt the tasks by using asyncio.FIRST_EXCEPTION mode to avoid
-        # inconsistent state (thumbnail may be created but not deleted when error raises)
-        # done, pending = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
-        # errors = list(filter(lambda x: x.exception() is not None, done))
-        # if errors:
-        #     for pending_task in pending:
-        #         pending_task.cancel()
-        #     raise errors[0].exception()
-
-        # if commit:
-        #     await self.entity_manager.commit()
+        if commit:
+            await self.entity_manager.commit()
 
         return mediafile
 
@@ -161,8 +143,9 @@ class MediafileRepository(PrimaryRepository):
 
     async def delete(self, mediafile: Mediafile, commit: bool=False):
         """Delete mediafile."""
-        for path in mediafile.mediafile_path, mediafile.thumbnail_path:
-            await FileManager.file_delete(path)
+        paths = [mediafile.mediafile_path, mediafile.thumbnail_path]
+        tasks = [asyncio.create_task(FileManager.file_delete(path)) for path in paths]
+        await asyncio.gather(*tasks)
 
         await self.entity_manager.delete(mediafile)
         await self._delete_tags(mediafile)
