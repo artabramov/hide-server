@@ -7,11 +7,12 @@ from app.models.tag_model import MediafileTag
 from app.config import get_cfg
 import os
 from app.models.primary_model import Primary
+from app.mixins.fernet_mixin import FernetMixin
 
 cfg = get_cfg()
 
 
-class Mediafile(Primary):
+class Mediafile(Primary, FernetMixin):
     """SQLAlchemy mediafile model."""
 
     __tablename__ = "mediafiles"
@@ -90,6 +91,14 @@ class Mediafile(Primary):
             self._thumbnail_image = ImageManager.open_image(self.thumbnail_path)
         return self._thumbnail_image
 
+    async def encrypt(self):
+        """Encrypt original file."""
+        await self.encrypt_file(self.mediafile_path)
+
+    async def decrypt(self):
+        """Decrypt original file."""
+        return await self.decrypt_file(self.mediafile_path)
+
     def to_dict(self):
         """Get model as dict."""
         return {
@@ -116,8 +125,3 @@ class Mediafile(Primary):
             "mediafile_colorset": self.mediafile_colorset.to_dict() if self.mediafile_colorset else {},
             "mediafile_tags": [x.tag_value for x in self.mediafile_tags],
         }
-
-
-# @event.listens_for(Mediafile, 'after_delete')
-# def after_delete(mapper, connection, mediafile):
-#     mediafile.delete()  

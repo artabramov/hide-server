@@ -8,11 +8,7 @@ from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
 from app.helpers.tag_helper import TagHelper
 from app.repositories.primary_repository import PrimaryRepository
-from sqlalchemy import event
 from fastapi import UploadFile
-from threading import Thread
-import concurrent.futures
-from PIL import Image
 import uuid
 import os
 from app.config import get_cfg
@@ -39,16 +35,22 @@ class MediafileRepository(PrimaryRepository):
 
     async def _create_colorset(self, mediafile: Mediafile):
         """Extract and insert colorset."""
-        mediafile_colors = ImageManager.get_colors(mediafile.mediafile_image)
-        colorset = Colorset(mediafile.id, **mediafile_colors)
-        await self.entity_manager.insert(colorset, flush=False)
+        try:
+            mediafile_colors = ImageManager.get_colors(mediafile.mediafile_image)
+            colorset = Colorset(mediafile.id, **mediafile_colors)
+            await self.entity_manager.insert(colorset, flush=False)
+        except Exception:
+            pass
 
     async def _create_metadata(self, mediafile: Mediafile):
         """Parse and insert metadata."""
-        metadatas = FileManager.get_metadata(mediafile.mediafile_image)
-        for meta_key in metadatas:
-            metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
-            await self.entity_manager.insert(metadata, flush=False)
+        try:
+            metadatas = FileManager.get_metadata(mediafile.mediafile_image)
+            for meta_key in metadatas:
+                metadata = Metadata(mediafile.id, meta_key, str(metadatas[meta_key]))
+                await self.entity_manager.insert(metadata, flush=False)
+        except Exception:
+            pass
 
     async def _create_tags(self, mediafile: Mediafile):
         """Parse description and insert tags."""
@@ -83,8 +85,7 @@ class MediafileRepository(PrimaryRepository):
             mediafile_path, thumbnail_path = None, None
 
             # upload file
-            mediafile_extension = FileManager.get_extension(file.filename)
-            mediafile_filename = str(uuid.uuid4()) + mediafile_extension
+            mediafile_filename = str(uuid.uuid4())
             mediafile_path = os.path.join(cfg.MEDIAFILE_PATH, mediafile_filename)
             await FileManager.file_upload(file, mediafile_path)
 
@@ -94,7 +95,7 @@ class MediafileRepository(PrimaryRepository):
             mimetype, filesize = await asyncio.gather(*tasks)
 
             # will create thumbnail later in async task
-            thumbnail_filename = str(uuid.uuid4()) + mediafile_extension
+            thumbnail_filename = str(uuid.uuid4()) + cfg.THUMBNAIL_EXTENSION
             thumbnail_path = os.path.join(cfg.THUMBNAIL_PATH, thumbnail_filename)
 
             # create mediafile
@@ -106,6 +107,9 @@ class MediafileRepository(PrimaryRepository):
             funcs = [self._create_thumbnail, self._create_colorset, self._create_metadata, self._create_tags]
             tasks = [asyncio.create_task(func(mediafile)) for func in funcs]
             await asyncio.gather(*tasks)
+
+            # encrypt original file
+            await mediafile.encrypt()
 
         except Exception:
             if mediafile_path:

@@ -64,7 +64,7 @@ class ImageManager:
     @staticmethod
     def get_colors(im):
         colors = ImageManager.get_colors_list()
-        palette = Image.new('P', (1,1))
+        palette = Image.new("P", (1, 1))
         palette.putpalette(colors)
         out = im.quantize(colors=len(colors), palette=palette, dither=Image.Dither.NONE)
 

@@ -156,9 +156,6 @@ class FileManager:
     @staticmethod
     async def file_upload(file: object, path: str) -> str:
         """Asynchronously upload a file under a unique filename and return the filename."""
-        # filename = os.path.join(str(uuid.uuid4()) + FileManager.get_extension(file.filename))
-        # path = os.path.join(dst_dir, filename)
-
         async with aiofiles.open(path, "wb") as fn:
             while content := await file.read(AIOFILES_CHUNK_SIZE):
                 await fn.write(content)

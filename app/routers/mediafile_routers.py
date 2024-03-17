@@ -6,10 +6,10 @@ from app.schemas.mediafile_schemas import MediafileSchema, MediafileInsertSchema
 from app.repositories.album_repository import AlbumRepository
 from app.repositories.mediafile_repository import MediafileRepository
 from app.repositories.comment_repository import CommentRepository
-from app.auth import auth_admin, auth_editor, auth_writer, auth_reader
+from app.auth import auth_editor, auth_writer, auth_reader
 from app.errors import E
 from app.config import get_cfg
-import os
+from fastapi.responses import Response
 
 cfg = get_cfg()
 router = APIRouter()
@@ -60,6 +60,19 @@ async def select_mediafile(mediafile_id: int, session = Depends(get_session), ca
         raise HTTPException(status_code=404)
 
     return mediafile.to_dict()
+
+
+@router.get('/mediafile/{mediafile_id}/download', tags=['mediafiles'])
+async def download_mediafile(mediafile_id: int, session=Depends(get_session), cache=Depends(get_cache),
+                           current_user=Depends(auth_reader)):
+    """Download original file."""
+    mediafile_repository = MediafileRepository(session, cache)
+    mediafile = await mediafile_repository.select(mediafile_id)
+    if not mediafile:
+        raise HTTPException(status_code=404)
+
+    data = await mediafile.decrypt()
+    return Response(content=data, media_type=mediafile.mimetype)
 
 
 @router.put('/mediafile/{mediafile_id}', tags=['mediafiles'])
@@ -121,8 +134,8 @@ async def delete_mediafile(mediafile_id: int, session=Depends(get_session), cach
     return {}
 
 @router.get('/mediafiles', tags=['mediafiles'])
-async def mediafiles_list(session = Depends(get_session), cache = Depends(get_cache),
-                          schema = Depends(MediafilesListSchema), current_user=Depends(auth_reader)):
+async def mediafiles_list(session=Depends(get_session), cache=Depends(get_cache),
+                          schema=Depends(MediafilesListSchema), current_user=Depends(auth_reader)):
     """Get users list."""
     mediafile_repository = MediafileRepository(session, cache)
     mediafiles = await mediafile_repository.select_all(**schema.kwargs)
