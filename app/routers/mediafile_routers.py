@@ -6,6 +6,7 @@ from app.schemas.mediafile_schemas import MediafileSchema, MediafileInsertSchema
 from app.repositories.album_repository import AlbumRepository
 from app.repositories.mediafile_repository import MediafileRepository
 from app.repositories.comment_repository import CommentRepository
+from app.repositories.bookmark_repository import BookmarkRepository
 from app.auth import auth_editor, auth_writer, auth_reader
 from app.errors import E
 from app.config import get_cfg
@@ -51,7 +52,7 @@ async def upload_mediafile(session = Depends(get_session), cache = Depends(get_c
 
 
 @router.get('/mediafile/{mediafile_id}', tags=['mediafiles'], response_model=MediafileSchema)
-async def select_mediafile(mediafile_id: int, session = Depends(get_session), cache = Depends(get_cache),
+async def select_mediafile(mediafile_id: int, session=Depends(get_session), cache=Depends(get_cache),
                            current_user=Depends(auth_reader)):
     """Select mediafile."""
     mediafile_repository = MediafileRepository(session, cache)
@@ -60,6 +61,20 @@ async def select_mediafile(mediafile_id: int, session = Depends(get_session), ca
         raise HTTPException(status_code=404)
 
     return mediafile.to_dict()
+
+
+@router.post('/mediafile/{mediafile_id}/bookmark', tags=['mediafiles'])
+async def insert_bookmark(mediafile_id: int, session=Depends(get_session), cache=Depends(get_cache),
+                          current_user=Depends(auth_reader)):
+    """Select mediafile."""
+    mediafile_repository = MediafileRepository(session, cache)
+    mediafile = await mediafile_repository.select(mediafile_id)
+    if not mediafile:
+        raise HTTPException(status_code=404)
+
+    bookmark_repository = BookmarkRepository(session, cache)
+    await bookmark_repository.insert(current_user.id, mediafile.id)
+    return {}
 
 
 @router.get('/mediafile/{mediafile_id}/download', tags=['mediafiles'])

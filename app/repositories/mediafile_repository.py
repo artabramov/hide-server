@@ -139,7 +139,7 @@ class MediafileRepository(PrimaryRepository):
         """Update mediafile."""
         await self.entity_manager.update(mediafile)
         await self._delete_tags(mediafile)
-        await self._insert_tags(mediafile)
+        await self._create_tags(mediafile)
 
         if commit:
             await self.entity_manager.commit()
