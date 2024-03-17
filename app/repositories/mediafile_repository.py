@@ -65,7 +65,8 @@ class MediafileRepository(PrimaryRepository):
 
     async def _delete_tags(self, mediafile: Mediafile):
         """Delete mediafile tags."""
-        # check for __dict__ is mandatory for cases when relationship is not loaded yet
+        # __dict__ checking is mandatory for cases when SQLAlchemy relationship
+        # is not loaded yet (transaction rollback on mediafile uploading)
         if "mediafile_tags" in mediafile.__dict__:
             for tag in mediafile.mediafile_tags:
                 mediafile_tag = await self.entity_manager.select_by(MediafileTag, mediafile_id__eq=mediafile.id, tag_id__eq=tag.id)

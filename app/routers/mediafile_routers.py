@@ -7,8 +7,6 @@ from app.repositories.album_repository import AlbumRepository
 from app.repositories.mediafile_repository import MediafileRepository
 from app.repositories.comment_repository import CommentRepository
 from app.auth import auth_admin, auth_editor, auth_writer, auth_reader
-from app.managers.file_manager import FileManager
-from app.models.mediafile_model import Mediafile
 from app.errors import E
 from app.config import get_cfg
 import os
