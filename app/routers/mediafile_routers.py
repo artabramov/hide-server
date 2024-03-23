@@ -6,7 +6,7 @@ from app.schemas.mediafile_schemas import MediafileSchema, MediafileInsertSchema
 from app.repositories.album_repository import AlbumRepository
 from app.repositories.mediafile_repository import MediafileRepository
 from app.repositories.comment_repository import CommentRepository
-from app.repositories.bookmark_repository import BookmarkRepository
+from app.repositories.favorite_repository import FavoriteRepository
 from app.auth import auth_editor, auth_writer, auth_reader
 from app.errors import E
 from app.config import get_cfg
@@ -63,17 +63,17 @@ async def select_mediafile(mediafile_id: int, session=Depends(get_session), cach
     return mediafile.to_dict()
 
 
-@router.post('/mediafile/{mediafile_id}/bookmark', tags=['mediafiles'])
-async def insert_bookmark(mediafile_id: int, session=Depends(get_session), cache=Depends(get_cache),
+@router.post('/mediafile/{mediafile_id}/favorite', tags=['mediafiles'])
+async def insert_favorite(mediafile_id: int, session=Depends(get_session), cache=Depends(get_cache),
                           current_user=Depends(auth_reader)):
-    """Select mediafile."""
+    """Insert favorite."""
     mediafile_repository = MediafileRepository(session, cache)
     mediafile = await mediafile_repository.select(mediafile_id)
     if not mediafile:
         raise HTTPException(status_code=404)
 
-    bookmark_repository = BookmarkRepository(session, cache)
-    await bookmark_repository.insert(current_user.id, mediafile.id)
+    favorite_repository = FavoriteRepository(session, cache)
+    await favorite_repository.insert(current_user.id, mediafile.id)
     return {}
 
 
@@ -140,6 +140,9 @@ async def delete_mediafile(mediafile_id: int, session=Depends(get_session), cach
     
     comment_repository = CommentRepository(session, cache)
     await comment_repository.delete_all(mediafile_id__eq=mediafile.id)
+
+    favorite_repository = FavoriteRepository(session, cache)
+    await favorite_repository.delete_all(mediafile_id__eq=mediafile.id)
 
     album_repository = AlbumRepository(session, cache)
     mediafile.mediafile_album.mediafiles_count = await mediafile_repository.count_all(album_id__eq=mediafile.mediafile_album.id, id__not=mediafile.id)

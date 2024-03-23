@@ -6,6 +6,7 @@ from app.models.mediafile_model import Mediafile
 from app.models.metadata_model import Metadata
 from app.models.colorset_model import Colorset
 from app.models.tag_model import Tag, MediafileTag
+from app.models.favorite_model import Favorite
 from app.helpers.tag_helper import TagHelper
 from app.repositories.primary_repository import PrimaryRepository
 from fastapi import UploadFile
